@@ -1,35 +1,64 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from "react";
+import { connectWallet } from "./web3/provider";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [address, setAddress] = useState(null);
+  const [chainId, setChainId] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleConnect = async () => {
+    try {
+      const { address, chainId } = await connectWallet();
+      setAddress(address);
+      setChainId(chainId);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  useEffect(() => {
+    if (!window.ethereum) return;
+
+    const handleAccountsChanged = (accounts) => {
+      if (accounts.length === 0) {
+        setAddress(null);
+      } else {
+        setAddress(accounts[0]);
+      }
+    };
+
+    const handleChainChanged = (chainIdHex) => {
+      setChainId(parseInt(chainIdHex, 16));
+    };
+
+    window.ethereum.on("accountsChanged", handleAccountsChanged);
+    window.ethereum.on("chainChanged", handleChainChanged);
+
+    return () => {
+      window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
+      window.ethereum.removeListener("chainChanged", handleChainChanged);
+    };
+  }, []);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div style={{ padding: "2rem" }}>
+      <h1>UniV2-ExchangeDesk</h1>
+
+      {!address ? (
+        <button onClick={handleConnect}>Connect Wallet</button>
+      ) : (
+        <div>
+          <p><strong>Connected Address:</strong> {address}</p>
+          <p><strong>Chain ID:</strong> {chainId}</p>
+        </div>
+      )}
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+    </div>
+  );
 }
 
-export default App
+export default App;
+
