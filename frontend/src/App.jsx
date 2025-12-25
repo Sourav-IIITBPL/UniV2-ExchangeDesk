@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { getProvider, connectWallet, getEthBalance, getErc20Balance } from "./web3/provider";
-import { getUniswapV2Pair, getPairReserves } from "./web3/uniswap";
-
+import { connectWallet, getEthBalance, getErc20Balance, getProvider } from "./web3/provider";
+import * as Uniswap from "./web3/uniswap";
+import { ethers } from "ethers";
 import "./App.css";
 
 function App() {
@@ -17,6 +17,11 @@ function App() {
   //@dev- uniswap pool connection states.
   const [pairAddress, setPairAddress] = useState(null);
   const [reserves, setReserves] = useState(null);
+  const [price, setPrice] = useState(null);
+
+  // @dev- Router interaction states
+
+  const [swapPreview, setSwapPreview] = useState(null);
 
 
 
@@ -107,7 +112,7 @@ function App() {
     const WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
     const USDC = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 
-    const pair = await getUniswapV2Pair(provider, WETH, USDC);
+    const pair = await Uniswap.getUniswapV2Pair(provider, WETH, USDC);
 
     if (!pair) {
       setPairAddress(null);
@@ -117,8 +122,13 @@ function App() {
 
     setPairAddress(pair);
 
-    const data = await getPairReserves(provider, pair);
+    const data = await Uniswap.getPairReserves(provider, pair);
     setReserves(data);
+
+    // setting the price
+    const priceValue = await Uniswap.derivePriceFromReserves(provider, data, WETH, USDC);
+    setPrice(priceValue);
+
   };
 
   useEffect(() => {
@@ -126,6 +136,59 @@ function App() {
     loadPoolData();
   }, [provider, chainId]);
 
+  // @dev - Router02 interaction functions 
+
+  const previewSwap = async () => {
+    if (!provider) return;
+
+    // Example: swap 0.01 WETH → USDC
+    const WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+    const USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+
+    const amountIn = ethers.parseEther("0.01");  // exact integer
+    const slippageBps = 50; // 0.5%
+
+    const preview = await Uniswap.getSwapPreview(
+      provider,
+      amountIn,
+      WETH,
+      USDC,
+      slippageBps
+    );
+
+    setSwapPreview(preview);
+  };
+
+  const executeSwap = async () => {
+    if (!provider || !swapPreview) return;
+
+    const signer = await provider.getSigner();
+
+    const WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+    const USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+
+    const amountIn = ethers.parseEther("0.01");
+
+    // 1. Approve
+    await Uniswap.approveToken(
+      signer,
+      WETH,
+      Uniswap.UNISWAP_V2_ROUTER,
+      amountIn
+    );
+
+    // 2. Swap
+    await Uniswap.executeSwapExactTokensForTokens(
+      signer,
+      amountIn,
+      swapPreview.amountOutMin,
+      WETH,
+      USDC,
+      address
+    );
+
+    alert("Swap executed successfully");
+  };
 
   return (
     <div style={{ padding: "2rem" }}>
@@ -169,12 +232,43 @@ function App() {
             <>
               <p><strong>Reserve0:</strong> {reserves.reserve0.toString()}</p>
               <p><strong>Reserve1:</strong> {reserves.reserve1.toString()}</p>
+              <p><strong>Last Interaction with pair:</strong> {reserves.LastInteract.toString()}</p>
 
             </>
           )}
         </div>
       ) : (
         <p>No Uniswap V2 pool exists for this pair.</p>
+      )}
+
+      {/* //@dev - price setting for tha pair  */}
+
+      {price && (
+        <p>
+          <strong>Price:</strong> 1 WETH ≈ {price.toFixed(4)} USDC
+        </p>
+      )}
+
+      <button onClick={previewSwap}>
+        Preview Swap (0.01 WETH → USDC)
+      </button>
+      {swapPreview && (
+        <div>
+          <p>
+            <strong>Expected Output:</strong>{" "}
+            {ethers.formatUnits(swapPreview.amountOut, 6)} USDC
+          </p>
+          <p>
+            <strong>Minimum Received:</strong>{" "}
+            {ethers.formatUnits(swapPreview.amountOutMin, 6)} USDC
+          </p>
+
+        </div>
+      )}
+      {swapPreview && (
+        <button onClick={executeSwap}>
+          Execute Swap
+        </button>
       )}
 
 
