@@ -1,5 +1,6 @@
 import { CHAINS } from "../config/chains";
-import { useChain } from "../hooks/useChain";
+import { useChain } from "../context/ChainContext";
+
 
 export default function ChainSelector() {
   const { chainId, selectChain } = useChain();

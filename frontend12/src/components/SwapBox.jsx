@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useChain } from "../hooks/useChain";
+import { useChain } from "../context/ChainContext";
 import { useRouter } from "../hooks/useRouter";
-import { useWallet } from "../hooks/useWallet";
+import { useWallet } from "../context/WalletContext";
 import { useDeadline } from "../hooks/useDeadline";
 import ChainSelector from "./ChainSelector";
 import TokenSelector from "./TokenSelector";

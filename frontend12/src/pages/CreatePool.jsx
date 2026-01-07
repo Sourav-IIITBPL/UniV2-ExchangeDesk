@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useChain } from "../hooks/useChain";
+import { useChain } from "../context/ChainContext";
 import PoolTable from "../components/PoolTable";
 import { fetchUndeployedPools } from "../services/pool.service";
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useChain } from "../hooks/useChain";
+import { useChain } from "../context/ChainContext";
 import { fetchAllPools } from "../services/pool.service";
 
 export default function Home() {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /*//////////////////////////////////////////////////////////////
@@ -349,17 +349,17 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
     }
 
     /// @notice Quote for given amounts and reserves
-    function quote(uint amountA, uint reserveA, uint reserveB) external pure returns (uint amountB) {
+    function quote(uint amountA, uint reserveA, uint reserveB) external view returns (uint amountB) {
         return uniswapRouter.quote(amountA, reserveA, reserveB);
     }
 
     /// @notice Calculate output amount for given input
-    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external pure returns (uint amountOut) {
+    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external view returns (uint amountOut) {
         return uniswapRouter.getAmountOut(amountIn, reserveIn, reserveOut);
     }
 
     /// @notice Calculate input amount for given output
-    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) external pure returns (uint amountIn) {
+    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) external view returns (uint amountIn) {
         return uniswapRouter.getAmountIn(amountOut, reserveIn, reserveOut);
     }
 
@@ -804,7 +804,7 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
 
         // Transfer LP tokens
         IUniswapV2Pair(pair).transferFrom(msg.sender, address(this), liquidity);
-        IUniswapV2Pair(pair).approve(address(uniswapRouter), liquidity);
+        IERC20(pair).approve(address(uniswapRouter), liquidity);
 
         // Remove liquidity
         (amountA, amountB) = uniswapRouter.removeLiquidity(
@@ -836,7 +836,7 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
 
         // Transfer and approve LP tokens
         IUniswapV2Pair(pair).transferFrom(msg.sender, address(this), liquidity);
-        IUniswapV2Pair(pair).approve(address(uniswapRouter), liquidity);
+        IERC20(pair).approve(address(uniswapRouter), liquidity);
 
         // Remove liquidity to this contract
         (amountToken, amountETH) = uniswapRouter.removeLiquidity(
@@ -886,7 +886,7 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
 
         // Transfer and remove
         IUniswapV2Pair(pair).transferFrom(msg.sender, address(this), liquidity);
-        IUniswapV2Pair(pair).approve(address(uniswapRouter), liquidity);
+        IERC20(pair).approve(address(uniswapRouter), liquidity);
 
         (amountA, amountB) = uniswapRouter.removeLiquidity(
             tokenA,
@@ -925,7 +925,7 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
 
         // Transfer and remove
         IUniswapV2Pair(pair).transferFrom(msg.sender, address(this), liquidity);
-        IUniswapV2Pair(pair).approve(address(uniswapRouter), liquidity);
+        IERC20(pair).approve(address(uniswapRouter), liquidity);
 
         (amountToken, amountETH) = uniswapRouter.removeLiquidity(
             token,
@@ -964,7 +964,7 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
 
         // Transfer and approve LP tokens
         IUniswapV2Pair(pair).transferFrom(msg.sender, address(this), liquidity);
-        IUniswapV2Pair(pair).approve(address(uniswapRouter), liquidity);
+        IERC20(pair).approve(address(uniswapRouter), liquidity);
 
         // Check balances before
         uint tokenBalBefore = IERC20(token).balanceOf(address(this));
@@ -1018,7 +1018,7 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
 
         // Transfer and approve LP tokens
         IUniswapV2Pair(pair).transferFrom(msg.sender, address(this), liquidity);
-        IUniswapV2Pair(pair).approve(address(uniswapRouter), liquidity);
+        IERC20(pair).approve(address(uniswapRouter), liquidity);
 
         // Check balances before
         uint tokenBalBefore = IERC20(token).balanceOf(address(this));

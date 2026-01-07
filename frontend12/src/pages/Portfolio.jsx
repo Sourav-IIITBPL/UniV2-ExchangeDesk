@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useChain } from "../hooks/useChain";
-import { useWallet } from "../hooks/useWallet";
+import { useChain } from "../context/ChainContext";
+import { useWallet } from "../context/WalletContext";
 import { fetchPortfolio } from "../services/portfolio.service";
 
 export default function Portfolio() {

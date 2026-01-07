@@ -1,4 +1,5 @@
-import { useWallet } from "../hooks/useWallet";
+import { useWallet } from "../context/WalletContext";
+
 
 export default function WalletButton() {
   const { account, connect } = useWallet();
