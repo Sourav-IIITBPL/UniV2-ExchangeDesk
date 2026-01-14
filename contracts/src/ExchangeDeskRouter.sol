@@ -11,14 +11,14 @@ import {IUniswapV2Pair} from "./interfaces/IUniswapV2Pair.sol";
 import {IWETH} from "./interfaces/IWETH.sol";
 
 /*//////////////////////////////////////////////////////////////
-                    EXCHANGE DESK ROUTER 
+                    EXCHANGE DESK ROUTER
 //////////////////////////////////////////////////////////////*/
 
 contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
     uint256 public constant BPS_DENOMINATOR = 10_000;
-    uint256 public constant MAX_FEE_BPS = 1;        // 0.001%
+    uint256 public constant MAX_FEE_BPS = 1; // 0.001%
     uint256 public constant MAX_SLIPPAGE_BPS = 500; // 5%
-    uint64  public constant MAX_DEADLINE_WINDOW = 20 minutes;
+    uint64 public constant MAX_DEADLINE_WINDOW = 20 minutes;
 
     IUniswapV2Router02 public immutable uniswapRouter;
     IUniswapV2Factory public immutable uniswapFactory;
@@ -37,14 +37,8 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
     error ETHTransferFailed();
     error PairDoesNotExist();
 
-    constructor(
-        address _router,
-        address _factory,
-        address _weth,
-        address _feeRecipient
-    ) Ownable(msg.sender) {
-        if (_router == address(0) || _factory == address(0) ||
-            _weth == address(0) || _feeRecipient == address(0)) {
+    constructor(address _router, address _factory, address _weth, address _feeRecipient) Ownable(msg.sender) {
+        if (_router == address(0) || _factory == address(0) || _weth == address(0) || _feeRecipient == address(0)) {
             revert ZeroAddress();
         }
 
@@ -59,17 +53,16 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
 
     function _validateDeadline(uint256 deadline) internal view {
-        if (deadline < block.timestamp ||
-            deadline > block.timestamp + MAX_DEADLINE_WINDOW) {
+        if (deadline < block.timestamp || deadline > block.timestamp + MAX_DEADLINE_WINDOW) {
             revert InvalidDeadline();
         }
     }
 
-    function _validateSlippage(uint256 slippageBPS) internal pure {
+    function _validateSlippage(uint256 slippageBPS) internal view {
         if (slippageBPS > MAX_SLIPPAGE_BPS) revert ExcessiveSlippage();
     }
 
-    function _validatePath(address[] calldata path) internal pure {
+    function _validatePath(address[] calldata path) internal view {
         if (path.length < 2) revert InvalidPath();
         if (path[0] == path[path.length - 1]) revert SameToken();
     }
@@ -95,12 +88,12 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
     /// @notice Swap exact tokens for tokens with slippage protection
     /// @param slippageBPS Slippage tolerance in basis points (e.g., 50 = 0.5%)
     function swapExactTokensForTokens(
-        uint amountIn,
-        uint slippageBPS,
+        uint256 amountIn,
+        uint256 slippageBPS,
         address[] calldata path,
         address to,
-        uint deadline
-    ) external nonReentrant returns (uint[] memory amounts) {
+        uint256 deadline
+    ) external nonReentrant returns (uint256[] memory amounts) {
         _validateDeadline(deadline);
         _validateSlippage(slippageBPS);
         _validatePath(path);
@@ -108,34 +101,32 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         address tokenIn = path[0];
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
 
-        uint fee = (amountIn * feeBps) / BPS_DENOMINATOR;
-        uint net = amountIn - fee;
+        uint256 fee = (amountIn * feeBps) / BPS_DENOMINATOR;
+        uint256 net = amountIn - fee;
         if (fee > 0) IERC20(tokenIn).transfer(feeRecipient, fee);
 
         // Calculate minimum output with slippage protection
-        uint[] memory q = uniswapRouter.getAmountsOut(net, path);
-        uint minOut = (q[q.length - 1] * (BPS_DENOMINATOR - slippageBPS)) / BPS_DENOMINATOR;
+        uint256[] memory q = uniswapRouter.getAmountsOut(net, path);
+        uint256 minOut = (q[q.length - 1] * (BPS_DENOMINATOR - slippageBPS)) / BPS_DENOMINATOR;
 
         IERC20(tokenIn).approve(address(uniswapRouter), net);
-        amounts = uniswapRouter.swapExactTokensForTokens(
-            net, minOut, path, to, deadline
-        );
+        amounts = uniswapRouter.swapExactTokensForTokens(net, minOut, path, to, deadline);
     }
 
     /// @notice Swap exact ETH for tokens with slippage protection
-    function swapExactETHForTokens(
-        uint slippageBPS,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external payable nonReentrant returns (uint[] memory amounts) {
+    function swapExactETHForTokens(uint256 slippageBPS, address[] calldata path, address to, uint256 deadline)
+        external
+        payable
+        nonReentrant
+        returns (uint256[] memory amounts)
+    {
         _validateDeadline(deadline);
         _validateSlippage(slippageBPS);
         _validatePath(path);
         if (path[0] != WETH) revert InvalidPath();
 
-        uint fee = (msg.value * feeBps) / BPS_DENOMINATOR;
-        uint net = msg.value - fee;
+        uint256 fee = (msg.value * feeBps) / BPS_DENOMINATOR;
+        uint256 net = msg.value - fee;
 
         if (fee > 0) {
             (bool ok,) = feeRecipient.call{value: fee}("");
@@ -143,22 +134,20 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         }
 
         // Calculate minimum output with slippage protection
-        uint[] memory q = uniswapRouter.getAmountsOut(net, path);
-        uint minOut = (q[q.length - 1] * (BPS_DENOMINATOR - slippageBPS)) / BPS_DENOMINATOR;
+        uint256[] memory q = uniswapRouter.getAmountsOut(net, path);
+        uint256 minOut = (q[q.length - 1] * (BPS_DENOMINATOR - slippageBPS)) / BPS_DENOMINATOR;
 
-        amounts = uniswapRouter.swapExactETHForTokens{value: net}(
-            minOut, path, to, deadline
-        );
+        amounts = uniswapRouter.swapExactETHForTokens{value: net}(minOut, path, to, deadline);
     }
 
     /// @notice Swap exact tokens for ETH with slippage protection
     function swapExactTokensForETH(
-        uint amountIn,
-        uint slippageBPS,
+        uint256 amountIn,
+        uint256 slippageBPS,
         address[] calldata path,
         address to,
-        uint deadline
-    ) external nonReentrant returns (uint[] memory amounts) {
+        uint256 deadline
+    ) external nonReentrant returns (uint256[] memory amounts) {
         _validateDeadline(deadline);
         _validateSlippage(slippageBPS);
         _validatePath(path);
@@ -167,18 +156,16 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         address tokenIn = path[0];
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
 
-        uint fee = (amountIn * feeBps) / BPS_DENOMINATOR;
-        uint net = amountIn - fee;
+        uint256 fee = (amountIn * feeBps) / BPS_DENOMINATOR;
+        uint256 net = amountIn - fee;
         if (fee > 0) IERC20(tokenIn).transfer(feeRecipient, fee);
 
         // Calculate minimum output with slippage protection
-        uint[] memory q = uniswapRouter.getAmountsOut(net, path);
-        uint minOut = (q[q.length - 1] * (BPS_DENOMINATOR - slippageBPS)) / BPS_DENOMINATOR;
+        uint256[] memory q = uniswapRouter.getAmountsOut(net, path);
+        uint256 minOut = (q[q.length - 1] * (BPS_DENOMINATOR - slippageBPS)) / BPS_DENOMINATOR;
 
         IERC20(tokenIn).approve(address(uniswapRouter), net);
-        amounts = uniswapRouter.swapExactTokensForETH(
-            net, minOut, path, to, deadline
-        );
+        amounts = uniswapRouter.swapExactTokensForETH(net, minOut, path, to, deadline);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -188,40 +175,38 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
     /// @notice Swap tokens for exact tokens with slippage protection on input
     /// @param slippageBPS Maximum additional input tolerance in basis points
     function swapTokensForExactTokens(
-        uint amountOut,
-        uint slippageBPS,
+        uint256 amountOut,
+        uint256 slippageBPS,
         address[] calldata path,
         address to,
-        uint deadline
-    ) external nonReentrant returns (uint[] memory amounts) {
+        uint256 deadline
+    ) external nonReentrant returns (uint256[] memory amounts) {
         _validateDeadline(deadline);
         _validateSlippage(slippageBPS);
         _validatePath(path);
 
         address tokenIn = path[0];
-        
+
         // Get exact amounts needed
-        uint[] memory q = uniswapRouter.getAmountsIn(amountOut, path);
-        uint amountInNeeded = q[0];
-        
+        uint256[] memory q = uniswapRouter.getAmountsIn(amountOut, path);
+        uint256 amountInNeeded = q[0];
+
         // Add fee on top
-        uint fee = (amountInNeeded * feeBps) / BPS_DENOMINATOR;
-        uint totalNeeded = amountInNeeded + fee;
-        
+        uint256 fee = (amountInNeeded * feeBps) / BPS_DENOMINATOR;
+        uint256 totalNeeded = amountInNeeded + fee;
+
         // Apply slippage tolerance to max input
-        uint maxInput = (totalNeeded * (BPS_DENOMINATOR + slippageBPS)) / BPS_DENOMINATOR;
+        uint256 maxInput = (totalNeeded * (BPS_DENOMINATOR + slippageBPS)) / BPS_DENOMINATOR;
 
         IERC20(tokenIn).transferFrom(msg.sender, address(this), maxInput);
 
         if (fee > 0) IERC20(tokenIn).transfer(feeRecipient, fee);
 
         IERC20(tokenIn).approve(address(uniswapRouter), maxInput - fee);
-        amounts = uniswapRouter.swapTokensForExactTokens(
-            amountOut, maxInput - fee, path, to, deadline
-        );
+        amounts = uniswapRouter.swapTokensForExactTokens(amountOut, maxInput - fee, path, to, deadline);
 
         // Refund excess
-        uint actualUsed = amounts[0] + fee;
+        uint256 actualUsed = amounts[0] + fee;
         if (maxInput > actualUsed) {
             IERC20(tokenIn).transfer(msg.sender, maxInput - actualUsed);
         }
@@ -229,27 +214,27 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
 
     /// @notice Swap ETH for exact tokens with slippage protection on input
     function swapETHForExactTokens(
-        uint amountOut,
-        uint slippageBPS,
+        uint256 amountOut,
+        uint256 slippageBPS,
         address[] calldata path,
         address to,
-        uint deadline
-    ) external payable nonReentrant returns (uint[] memory amounts) {
+        uint256 deadline
+    ) external payable nonReentrant returns (uint256[] memory amounts) {
         _validateDeadline(deadline);
         _validateSlippage(slippageBPS);
         _validatePath(path);
         if (path[0] != WETH) revert InvalidPath();
 
         // Get exact ETH needed
-        uint[] memory q = uniswapRouter.getAmountsIn(amountOut, path);
-        uint ethNeeded = q[0];
-        
+        uint256[] memory q = uniswapRouter.getAmountsIn(amountOut, path);
+        uint256 ethNeeded = q[0];
+
         // Add fee on top
-        uint fee = (ethNeeded * feeBps) / BPS_DENOMINATOR;
-        uint totalNeeded = ethNeeded + fee;
-        
+        uint256 fee = (ethNeeded * feeBps) / BPS_DENOMINATOR;
+        uint256 totalNeeded = ethNeeded + fee;
+
         // Apply slippage tolerance
-        uint maxETH = (totalNeeded * (BPS_DENOMINATOR + slippageBPS)) / BPS_DENOMINATOR;
+        uint256 maxETH = (totalNeeded * (BPS_DENOMINATOR + slippageBPS)) / BPS_DENOMINATOR;
         if (msg.value < maxETH) revert ExcessiveInputAmount();
 
         if (fee > 0) {
@@ -257,12 +242,10 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
             if (!ok) revert ETHTransferFailed();
         }
 
-        amounts = uniswapRouter.swapETHForExactTokens{value: msg.value - fee}(
-            amountOut, path, to, deadline
-        );
+        amounts = uniswapRouter.swapETHForExactTokens{value: msg.value - fee}(amountOut, path, to, deadline);
 
         // Refund excess ETH
-        uint actualUsed = amounts[0] + fee;
+        uint256 actualUsed = amounts[0] + fee;
         if (msg.value > actualUsed) {
             (bool ok,) = msg.sender.call{value: msg.value - actualUsed}("");
             if (!ok) revert ETHTransferFailed();
@@ -271,41 +254,39 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
 
     /// @notice Swap tokens for exact ETH with slippage protection on input
     function swapTokensForExactETH(
-        uint amountOut,
-        uint slippageBPS,
+        uint256 amountOut,
+        uint256 slippageBPS,
         address[] calldata path,
         address to,
-        uint deadline
-    ) external nonReentrant returns (uint[] memory amounts) {
+        uint256 deadline
+    ) external nonReentrant returns (uint256[] memory amounts) {
         _validateDeadline(deadline);
         _validateSlippage(slippageBPS);
         _validatePath(path);
         if (path[path.length - 1] != WETH) revert InvalidPath();
 
         address tokenIn = path[0];
-        
+
         // Get exact amounts needed
-        uint[] memory q = uniswapRouter.getAmountsIn(amountOut, path);
-        uint amountInNeeded = q[0];
-        
+        uint256[] memory q = uniswapRouter.getAmountsIn(amountOut, path);
+        uint256 amountInNeeded = q[0];
+
         // Add fee on top
-        uint fee = (amountInNeeded * feeBps) / BPS_DENOMINATOR;
-        uint totalNeeded = amountInNeeded + fee;
-        
+        uint256 fee = (amountInNeeded * feeBps) / BPS_DENOMINATOR;
+        uint256 totalNeeded = amountInNeeded + fee;
+
         // Apply slippage tolerance to max input
-        uint maxInput = (totalNeeded * (BPS_DENOMINATOR + slippageBPS)) / BPS_DENOMINATOR;
+        uint256 maxInput = (totalNeeded * (BPS_DENOMINATOR + slippageBPS)) / BPS_DENOMINATOR;
 
         IERC20(tokenIn).transferFrom(msg.sender, address(this), maxInput);
 
         if (fee > 0) IERC20(tokenIn).transfer(feeRecipient, fee);
 
         IERC20(tokenIn).approve(address(uniswapRouter), maxInput - fee);
-        amounts = uniswapRouter.swapTokensForExactETH(
-            amountOut, maxInput - fee, path, to, deadline
-        );
+        amounts = uniswapRouter.swapTokensForExactETH(amountOut, maxInput - fee, path, to, deadline);
 
         // Refund excess
-        uint actualUsed = amounts[0] + fee;
+        uint256 actualUsed = amounts[0] + fee;
         if (maxInput > actualUsed) {
             IERC20(tokenIn).transfer(msg.sender, maxInput - actualUsed);
         }
@@ -317,11 +298,11 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
 
     function swapExactTokensForTokensSupportingFeeOnTransferTokens(
-        uint amountIn,
-        uint amountOutMin,
+        uint256 amountIn,
+        uint256 amountOutMin,
         address[] calldata path,
         address to,
-        uint deadline
+        uint256 deadline
     ) external nonReentrant {
         _validateDeadline(deadline);
         _validatePath(path);
@@ -329,45 +310,41 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         address tokenIn = path[0];
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
 
-        uint fee = (amountIn * feeBps) / BPS_DENOMINATOR;
-        uint net = amountIn - fee;
+        uint256 fee = (amountIn * feeBps) / BPS_DENOMINATOR;
+        uint256 net = amountIn - fee;
         if (fee > 0) IERC20(tokenIn).transfer(feeRecipient, fee);
 
         IERC20(tokenIn).approve(address(uniswapRouter), net);
-        uniswapRouter.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-            net, amountOutMin, path, to, deadline
-        );
+        uniswapRouter.swapExactTokensForTokensSupportingFeeOnTransferTokens(net, amountOutMin, path, to, deadline);
     }
 
     function swapExactETHForTokensSupportingFeeOnTransferTokens(
-        uint amountOutMin,
+        uint256 amountOutMin,
         address[] calldata path,
         address to,
-        uint deadline
+        uint256 deadline
     ) external payable nonReentrant {
         _validateDeadline(deadline);
         _validatePath(path);
         if (path[0] != WETH) revert InvalidPath();
 
-        uint fee = (msg.value * feeBps) / BPS_DENOMINATOR;
-        uint net = msg.value - fee;
+        uint256 fee = (msg.value * feeBps) / BPS_DENOMINATOR;
+        uint256 net = msg.value - fee;
 
         if (fee > 0) {
             (bool ok,) = feeRecipient.call{value: fee}("");
             if (!ok) revert ETHTransferFailed();
         }
 
-        uniswapRouter.swapExactETHForTokensSupportingFeeOnTransferTokens{value: net}(
-            amountOutMin, path, to, deadline
-        );
+        uniswapRouter.swapExactETHForTokensSupportingFeeOnTransferTokens{value: net}(amountOutMin, path, to, deadline);
     }
 
     function swapExactTokensForETHSupportingFeeOnTransferTokens(
-        uint amountIn,
-        uint amountOutMin,
+        uint256 amountIn,
+        uint256 amountOutMin,
         address[] calldata path,
         address to,
-        uint deadline
+        uint256 deadline
     ) external nonReentrant {
         _validateDeadline(deadline);
         _validatePath(path);
@@ -376,14 +353,12 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         address tokenIn = path[0];
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
 
-        uint fee = (amountIn * feeBps) / BPS_DENOMINATOR;
-        uint net = amountIn - fee;
+        uint256 fee = (amountIn * feeBps) / BPS_DENOMINATOR;
+        uint256 net = amountIn - fee;
         if (fee > 0) IERC20(tokenIn).transfer(feeRecipient, fee);
 
         IERC20(tokenIn).approve(address(uniswapRouter), net);
-        uniswapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
-            net, amountOutMin, path, to, deadline
-        );
+        uniswapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(net, amountOutMin, path, to, deadline);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -396,13 +371,13 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
     function addLiquidity(
         address tokenA,
         address tokenB,
-        uint amountADesired,
-        uint amountBDesired,
-        uint amountAMin,
-        uint amountBMin,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 amountAMin,
+        uint256 amountBMin,
         address to,
-        uint deadline
-    ) external nonReentrant returns (uint amountA, uint amountB, uint liquidity) {
+        uint256 deadline
+    ) external nonReentrant returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
         _validateDeadline(deadline);
         if (tokenA == tokenB) revert SameToken();
 
@@ -410,10 +385,10 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         IERC20(tokenB).transferFrom(msg.sender, address(this), amountBDesired);
 
         // Calculate fees for both tokens
-        uint feeA = (amountADesired * feeBps) / BPS_DENOMINATOR;
-        uint feeB = (amountBDesired * feeBps) / BPS_DENOMINATOR;
-        uint netA = amountADesired - feeA;
-        uint netB = amountBDesired - feeB;
+        uint256 feeA = (amountADesired * feeBps) / BPS_DENOMINATOR;
+        uint256 feeB = (amountBDesired * feeBps) / BPS_DENOMINATOR;
+        uint256 netA = amountADesired - feeA;
+        uint256 netB = amountBDesired - feeB;
 
         // Transfer fees
         if (feeA > 0) IERC20(tokenA).transfer(feeRecipient, feeA);
@@ -422,16 +397,8 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         IERC20(tokenA).approve(address(uniswapRouter), netA);
         IERC20(tokenB).approve(address(uniswapRouter), netB);
 
-        (amountA, amountB, liquidity) = uniswapRouter.addLiquidity(
-            tokenA,
-            tokenB,
-            netA,
-            netB,
-            amountAMin,
-            amountBMin,
-            to,
-            deadline
-        );
+        (amountA, amountB, liquidity) =
+            uniswapRouter.addLiquidity(tokenA, tokenB, netA, netB, amountAMin, amountBMin, to, deadline);
 
         // Refund excess
         if (netA > amountA) IERC20(tokenA).transfer(msg.sender, netA - amountA);
@@ -442,21 +409,19 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
     /// @dev Slippage protection via amountTokenMin and amountETHMin
     function addLiquidityETH(
         address token,
-        uint amountTokenDesired,
-        uint amountTokenMin,
-        uint amountETHMin,
+        uint256 amountTokenDesired,
+        uint256 amountTokenMin,
+        uint256 amountETHMin,
         address to,
-        uint deadline
-    ) external payable nonReentrant
-      returns (uint amountToken, uint amountETH, uint liquidity)
-    {
+        uint256 deadline
+    ) external payable nonReentrant returns (uint256 amountToken, uint256 amountETH, uint256 liquidity) {
         _validateDeadline(deadline);
 
         // Calculate fees for both ETH and token
-        uint feeETH = (msg.value * feeBps) / BPS_DENOMINATOR;
-        uint feeToken = (amountTokenDesired * feeBps) / BPS_DENOMINATOR;
-        uint netETH = msg.value - feeETH;
-        uint netToken = amountTokenDesired - feeToken;
+        uint256 feeETH = (msg.value * feeBps) / BPS_DENOMINATOR;
+        uint256 feeToken = (amountTokenDesired * feeBps) / BPS_DENOMINATOR;
+        uint256 netETH = msg.value - feeETH;
+        uint256 netToken = amountTokenDesired - feeToken;
 
         // Transfer ETH fee
         if (feeETH > 0) {
@@ -465,21 +430,14 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         }
 
         IERC20(token).transferFrom(msg.sender, address(this), amountTokenDesired);
-        
+
         // Transfer token fee
         if (feeToken > 0) IERC20(token).transfer(feeRecipient, feeToken);
 
         IERC20(token).approve(address(uniswapRouter), netToken);
 
         (amountToken, amountETH, liquidity) =
-            uniswapRouter.addLiquidityETH{value: netETH}(
-                token,
-                netToken,
-                amountTokenMin,
-                amountETHMin,
-                to,
-                deadline
-            );
+            uniswapRouter.addLiquidityETH{value: netETH}(token, netToken, amountTokenMin, amountETHMin, to, deadline);
 
         // Refund excess ETH
         if (netETH > amountETH) {
@@ -501,12 +459,12 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
     function removeLiquidity(
         address tokenA,
         address tokenB,
-        uint liquidity,
-        uint amountAMin,
-        uint amountBMin,
+        uint256 liquidity,
+        uint256 amountAMin,
+        uint256 amountBMin,
         address to,
-        uint deadline
-    ) external nonReentrant returns (uint, uint) {
+        uint256 deadline
+    ) external nonReentrant returns (uint256, uint256) {
         _validateDeadline(deadline);
 
         address pair = uniswapFactory.getPair(tokenA, tokenB);
@@ -515,19 +473,17 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         IUniswapV2Pair(pair).transferFrom(msg.sender, address(this), liquidity);
         IERC20(pair).approve(address(uniswapRouter), liquidity);
 
-        return uniswapRouter.removeLiquidity(
-            tokenA, tokenB, liquidity, amountAMin, amountBMin, to, deadline
-        );
+        return uniswapRouter.removeLiquidity(tokenA, tokenB, liquidity, amountAMin, amountBMin, to, deadline);
     }
 
     function removeLiquidityETH(
         address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
+        uint256 liquidity,
+        uint256 amountTokenMin,
+        uint256 amountETHMin,
         address to,
-        uint deadline
-    ) external nonReentrant returns (uint amountToken, uint amountETH) {
+        uint256 deadline
+    ) external nonReentrant returns (uint256 amountToken, uint256 amountETH) {
         _validateDeadline(deadline);
 
         address pair = uniswapFactory.getPair(token, WETH);
@@ -536,19 +492,17 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         IUniswapV2Pair(pair).transferFrom(msg.sender, address(this), liquidity);
         IERC20(pair).approve(address(uniswapRouter), liquidity);
 
-        return uniswapRouter.removeLiquidityETH(
-            token, liquidity, amountTokenMin, amountETHMin, to, deadline
-        );
+        return uniswapRouter.removeLiquidityETH(token, liquidity, amountTokenMin, amountETHMin, to, deadline);
     }
 
     function removeLiquidityETHSupportingFeeOnTransferTokens(
         address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
+        uint256 liquidity,
+        uint256 amountTokenMin,
+        uint256 amountETHMin,
         address to,
-        uint deadline
-    ) external nonReentrant returns (uint amountETH) {
+        uint256 deadline
+    ) external nonReentrant returns (uint256 amountETH) {
         _validateDeadline(deadline);
 
         address pair = uniswapFactory.getPair(token, WETH);
@@ -566,33 +520,31 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
                         VIEW FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function quote(uint amountA, uint reserveA, uint reserveB) 
-        external pure returns (uint amountB) 
-    {
+    function quote(uint256 amountA, uint256 reserveA, uint256 reserveB) external view returns (uint256 amountB) {
         return uniswapRouter.quote(amountA, reserveA, reserveB);
     }
 
-    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) 
-        external pure returns (uint amountOut) 
+    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
+        external
+        view
+        returns (uint256 amountOut)
     {
         return uniswapRouter.getAmountOut(amountIn, reserveIn, reserveOut);
     }
 
-    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) 
-        external pure returns (uint amountIn) 
+    function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)
+        external
+        view
+        returns (uint256 amountIn)
     {
         return uniswapRouter.getAmountIn(amountOut, reserveIn, reserveOut);
     }
 
-    function getAmountsOut(uint amountIn, address[] calldata path) 
-        external view returns (uint[] memory amounts) 
-    {
+    function getAmountsOut(uint256 amountIn, address[] calldata path) external view returns (uint256[] memory amounts) {
         return uniswapRouter.getAmountsOut(amountIn, path);
     }
 
-    function getAmountsIn(uint amountOut, address[] calldata path) 
-        external view returns (uint[] memory amounts) 
-    {
+    function getAmountsIn(uint256 amountOut, address[] calldata path) external view returns (uint256[] memory amounts) {
         return uniswapRouter.getAmountsIn(amountOut, path);
     }
 
@@ -600,9 +552,7 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
                         PAIR CREATION
     //////////////////////////////////////////////////////////////*/
 
-    function createPairIfNotExists(address a, address b)
-        external returns (address pair)
-    {
+    function createPairIfNotExists(address a, address b) external returns (address pair) {
         if (a == b) revert SameToken();
         if (a == address(0) || b == address(0)) revert ZeroAddress();
 
