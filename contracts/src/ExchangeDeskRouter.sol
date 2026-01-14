@@ -3,257 +3,39 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import {IUniswapV2Router02} from "./interfaces/IUniswapV2Router02.sol";
+import {IUniswapV2Factory} from "./interfaces/IUniswapV2Factory.sol";
+import {IUniswapV2Pair} from "./interfaces/IUniswapV2Pair.sol";
+import {IWETH} from "./interfaces/IWETH.sol";
 
 /*//////////////////////////////////////////////////////////////
-                            INTERFACES
+                    EXCHANGE DESK ROUTER 
 //////////////////////////////////////////////////////////////*/
 
-interface IUniswapV2Router02 {
-    function swapExactTokensForTokens(
-        uint amountIn,
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external returns (uint[] memory amounts);
-
-    function swapTokensForExactTokens(
-        uint amountOut,
-        uint amountInMax,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external returns (uint[] memory amounts);
-
-    function swapExactETHForTokens(
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external payable returns (uint[] memory amounts);
-
-    function swapTokensForExactETH(
-        uint amountOut,
-        uint amountInMax,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external returns (uint[] memory amounts);
-
-    function swapExactTokensForETH(
-        uint amountIn,
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external returns (uint[] memory amounts);
-
-    function swapETHForExactTokens(
-        uint amountOut,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external payable returns (uint[] memory amounts);
-
-    function addLiquidity(
-        address tokenA,
-        address tokenB,
-        uint amountADesired,
-        uint amountBDesired,
-        uint amountAMin,
-        uint amountBMin,
-        address to,
-        uint deadline
-    ) external returns (uint amountA, uint amountB, uint liquidity);
-
-    function addLiquidityETH(
-        address token,
-        uint amountTokenDesired,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline
-    ) external payable returns (uint amountToken, uint amountETH, uint liquidity);
-
-    function removeLiquidity(
-        address tokenA,
-        address tokenB,
-        uint liquidity,
-        uint amountAMin,
-        uint amountBMin,
-        address to,
-        uint deadline
-    ) external returns (uint amountA, uint amountB);
-
-    function removeLiquidityETH(
-        address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline
-    ) external returns (uint amountToken, uint amountETH);
-
-    function removeLiquidityWithPermit(
-        address tokenA,
-        address tokenB,
-        uint liquidity,
-        uint amountAMin,
-        uint amountBMin,
-        address to,
-        uint deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint amountA, uint amountB);
-
-    function removeLiquidityETHWithPermit(
-        address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint amountToken, uint amountETH);
-
-    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
-        uint amountIn,
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external;
-
-    function swapExactETHForTokensSupportingFeeOnTransferTokens(
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external payable;
-
-    function swapExactTokensForETHSupportingFeeOnTransferTokens(
-        uint amountIn,
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external;
-
-    function removeLiquidityETHSupportingFeeOnTransferTokens(
-        address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline
-    ) external returns (uint amountETH);
-
-    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
-        address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint amountETH);
-
-    function quote(uint amountA, uint reserveA, uint reserveB) external pure returns (uint amountB);
-    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external pure returns (uint amountOut);
-    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) external pure returns (uint amountIn);
-    function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts);
-    function getAmountsIn(uint amountOut, address[] calldata path) external view returns (uint[] memory amounts);
-}
-
-interface IUniswapV2Factory {
-    function getPair(address tokenA, address tokenB) external view returns (address pair);
-    function createPair(address tokenA, address tokenB) external returns (address pair);
-}
-
-interface IUniswapV2Pair {
-    function balanceOf(address user) external view returns (uint);
-    function transferFrom(address from, address to, uint value) external returns (bool);
-    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external;
-    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
-    function token0() external view returns (address);
-    function token1() external view returns (address);
-}
-
-interface IERC20 {
-    function transferFrom(address from, address to, uint value) external returns (bool);
-    function transfer(address to, uint value) external returns (bool);
-    function approve(address spender, uint value) external returns (bool);
-    function balanceOf(address account) external view returns (uint);
-}
-
-interface IWETH {
-    function deposit() external payable;
-    function withdraw(uint) external;
-    function transfer(address to, uint value) external returns (bool);
-    function approve(address spender, uint value) external returns (bool);
-}
-
-/*//////////////////////////////////////////////////////////////
-                        EXCHANGE DESK ROUTER
-//////////////////////////////////////////////////////////////*/
-
-/// @title ExchangeDeskRouter
-/// @notice Audit-grade router implementing full IUniswapV2Router02 functionality with fee-on-transfer support
-/// @dev Enforces strict invariants: no same-token, no zero-address, pair existence, deadline bounds, CEI pattern
 contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
-    /*//////////////////////////////////////////////////////////////
-                                CONSTANTS
-    //////////////////////////////////////////////////////////////*/
-
-    uint256 public constant MAX_FEE_BPS = 50; // 0.5%
     uint256 public constant BPS_DENOMINATOR = 10_000;
-    uint256 public constant MAX_DEADLINE_WINDOW = 10 minutes;
-
-    /*//////////////////////////////////////////////////////////////
-                                STORAGE
-    //////////////////////////////////////////////////////////////*/
+    uint256 public constant MAX_FEE_BPS = 1;        // 0.001%
+    uint256 public constant MAX_SLIPPAGE_BPS = 500; // 5%
+    uint64  public constant MAX_DEADLINE_WINDOW = 20 minutes;
 
     IUniswapV2Router02 public immutable uniswapRouter;
     IUniswapV2Factory public immutable uniswapFactory;
     address public immutable WETH;
 
     address public feeRecipient;
-    uint256 public feeBps = 5; // 0.05%
-
-    /*//////////////////////////////////////////////////////////////
-                                ERRORS
-    //////////////////////////////////////////////////////////////*/
+    uint256 public feeBps = 1; // 0.001%
 
     error ZeroAddress();
     error SameToken();
-    error PairDoesNotExist();
-    error InvalidDeadline();
-    error InsufficientLiquidityBalance();
-    error FeeTooHigh();
     error InvalidPath();
-    error InsufficientOutputAmount();
+    error InvalidDeadline();
     error ExcessiveInputAmount();
+    error ExcessiveSlippage();
+    error FeeTooHigh();
     error ETHTransferFailed();
-    error InvalidMsgValue();
-
-    /*//////////////////////////////////////////////////////////////
-                                EVENTS
-    //////////////////////////////////////////////////////////////*/
-
-    event FeeRecipientUpdated(address indexed oldRecipient, address indexed newRecipient);
-    event FeeBpsUpdated(uint256 oldFeeBps, uint256 newFeeBps);
-
-    /*//////////////////////////////////////////////////////////////
-                              CONSTRUCTOR
-    //////////////////////////////////////////////////////////////*/
+    error PairDoesNotExist();
 
     constructor(
         address _router,
@@ -261,7 +43,8 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         address _weth,
         address _feeRecipient
     ) Ownable(msg.sender) {
-        if (_router == address(0) || _factory == address(0) || _weth == address(0) || _feeRecipient == address(0)) {
+        if (_router == address(0) || _factory == address(0) ||
+            _weth == address(0) || _feeRecipient == address(0)) {
             revert ZeroAddress();
         }
 
@@ -272,327 +55,267 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
     }
 
     /*//////////////////////////////////////////////////////////////
-                        ADMIN CONTROLS
-    //////////////////////////////////////////////////////////////*/
-
-    /// @notice Update fee recipient address
-    /// @param newRecipient New fee recipient address
-    function setFeeRecipient(address newRecipient) external onlyOwner {
-        if (newRecipient == address(0)) revert ZeroAddress();
-        emit FeeRecipientUpdated(feeRecipient, newRecipient);
-        feeRecipient = newRecipient;
-    }
-
-    /// @notice Update fee basis points
-    /// @param newFeeBps New fee in basis points (max 0.5%)
-    function setFeeBps(uint256 newFeeBps) external onlyOwner {
-        if (newFeeBps > MAX_FEE_BPS) revert FeeTooHigh();
-        emit FeeBpsUpdated(feeBps, newFeeBps);
-        feeBps = newFeeBps;
-    }
-
-    /*//////////////////////////////////////////////////////////////
                         INTERNAL HELPERS
     //////////////////////////////////////////////////////////////*/
 
-    /// @dev Validates deadline is within acceptable window
     function _validateDeadline(uint256 deadline) internal view {
-        if (deadline < block.timestamp || deadline > block.timestamp + MAX_DEADLINE_WINDOW) {
+        if (deadline < block.timestamp ||
+            deadline > block.timestamp + MAX_DEADLINE_WINDOW) {
             revert InvalidDeadline();
         }
     }
 
-    /// @dev Validates tokens are different and non-zero
-    function _validateTokens(address tokenA, address tokenB) internal pure {
-        if (tokenA == address(0) || tokenB == address(0)) revert ZeroAddress();
-        if (tokenA == tokenB) revert SameToken();
+    function _validateSlippage(uint256 slippageBPS) internal pure {
+        if (slippageBPS > MAX_SLIPPAGE_BPS) revert ExcessiveSlippage();
     }
 
-    /// @dev Validates single token is non-zero
-    function _validateToken(address token) internal pure {
-        if (token == address(0)) revert ZeroAddress();
-    }
-
-    /// @dev Validates path has at least 2 tokens
     function _validatePath(address[] calldata path) internal pure {
         if (path.length < 2) revert InvalidPath();
-    }
-
-    /// @dev Takes fee from amount and returns net amount
-    function _takeFee(address token, uint256 amount) internal returns (uint256 net) {
-        uint256 fee = (amount * feeBps) / BPS_DENOMINATOR;
-        if (fee > 0) {
-            IERC20(token).transfer(feeRecipient, fee);
-        }
-        net = amount - fee;
-    }
-
-    /// @dev Wraps ETH to WETH
-    function _wrapETH(uint256 amount) internal {
-        IWETH(WETH).deposit{value: amount}();
-    }
-
-    /// @dev Unwraps WETH to ETH and sends to recipient
-    function _unwrapAndSendETH(address to, uint256 amount) internal {
-        IWETH(WETH).withdraw(amount);
-        (bool success, ) = to.call{value: amount}("");
-        if (!success) revert ETHTransferFailed();
+        if (path[0] == path[path.length - 1]) revert SameToken();
     }
 
     /*//////////////////////////////////////////////////////////////
-                            VIEW FUNCTIONS
+                        ADMIN
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Returns factory address
-    function factory() external view returns (address) {
-        return address(uniswapFactory);
+    function setFeeRecipient(address r) external onlyOwner {
+        if (r == address(0)) revert ZeroAddress();
+        feeRecipient = r;
     }
 
-    /// @notice Quote for given amounts and reserves
-    function quote(uint amountA, uint reserveA, uint reserveB) external view returns (uint amountB) {
-        return uniswapRouter.quote(amountA, reserveA, reserveB);
-    }
-
-    /// @notice Calculate output amount for given input
-    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external view returns (uint amountOut) {
-        return uniswapRouter.getAmountOut(amountIn, reserveIn, reserveOut);
-    }
-
-    /// @notice Calculate input amount for given output
-    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) external view returns (uint amountIn) {
-        return uniswapRouter.getAmountIn(amountOut, reserveIn, reserveOut);
-    }
-
-    /// @notice Get output amounts for path
-    function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts) {
-        return uniswapRouter.getAmountsOut(amountIn, path);
-    }
-
-    /// @notice Get input amounts for path
-    function getAmountsIn(uint amountOut, address[] calldata path) external view returns (uint[] memory amounts) {
-        return uniswapRouter.getAmountsIn(amountOut, path);
+    function setFeeBps(uint256 bps) external onlyOwner {
+        if (bps > MAX_FEE_BPS) revert FeeTooHigh();
+        feeBps = bps;
     }
 
     /*//////////////////////////////////////////////////////////////
-                        SWAP FUNCTIONS - EXACT INPUT
+                        EXACT INPUT SWAPS (WITH SLIPPAGE)
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Swap exact tokens for tokens
+    /// @notice Swap exact tokens for tokens with slippage protection
+    /// @param slippageBPS Slippage tolerance in basis points (e.g., 50 = 0.5%)
     function swapExactTokensForTokens(
         uint amountIn,
-        uint amountOutMin,
+        uint slippageBPS,
         address[] calldata path,
         address to,
         uint deadline
     ) external nonReentrant returns (uint[] memory amounts) {
         _validateDeadline(deadline);
+        _validateSlippage(slippageBPS);
         _validatePath(path);
-        _validateTokens(path[0], path[path.length - 1]);
 
         address tokenIn = path[0];
-        
-        // Transfer tokens from user
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
-        
-        // Take fee
-        uint netAmount = _takeFee(tokenIn, amountIn);
-        
-        // Approve and swap
-        IERC20(tokenIn).approve(address(uniswapRouter), netAmount);
+
+        uint fee = (amountIn * feeBps) / BPS_DENOMINATOR;
+        uint net = amountIn - fee;
+        if (fee > 0) IERC20(tokenIn).transfer(feeRecipient, fee);
+
+        // Calculate minimum output with slippage protection
+        uint[] memory q = uniswapRouter.getAmountsOut(net, path);
+        uint minOut = (q[q.length - 1] * (BPS_DENOMINATOR - slippageBPS)) / BPS_DENOMINATOR;
+
+        IERC20(tokenIn).approve(address(uniswapRouter), net);
         amounts = uniswapRouter.swapExactTokensForTokens(
-            netAmount,
-            amountOutMin,
-            path,
-            to,
-            deadline
+            net, minOut, path, to, deadline
         );
     }
 
-    /// @notice Swap exact ETH for tokens
+    /// @notice Swap exact ETH for tokens with slippage protection
     function swapExactETHForTokens(
-        uint amountOutMin,
+        uint slippageBPS,
         address[] calldata path,
         address to,
         uint deadline
     ) external payable nonReentrant returns (uint[] memory amounts) {
         _validateDeadline(deadline);
+        _validateSlippage(slippageBPS);
         _validatePath(path);
         if (path[0] != WETH) revert InvalidPath();
-        
-        uint netAmount = msg.value;
-        
-        // Take fee in ETH
+
         uint fee = (msg.value * feeBps) / BPS_DENOMINATOR;
+        uint net = msg.value - fee;
+
         if (fee > 0) {
-            netAmount = msg.value - fee;
-            (bool success, ) = feeRecipient.call{value: fee}("");
-            if (!success) revert ETHTransferFailed();
+            (bool ok,) = feeRecipient.call{value: fee}("");
+            if (!ok) revert ETHTransferFailed();
         }
-        
-        // Wrap ETH and swap
-        _wrapETH(netAmount);
-        IERC20(WETH).approve(address(uniswapRouter), netAmount);
-        amounts = uniswapRouter.swapExactETHForTokens{value: 0}(
-            amountOutMin,
-            path,
-            to,
-            deadline
+
+        // Calculate minimum output with slippage protection
+        uint[] memory q = uniswapRouter.getAmountsOut(net, path);
+        uint minOut = (q[q.length - 1] * (BPS_DENOMINATOR - slippageBPS)) / BPS_DENOMINATOR;
+
+        amounts = uniswapRouter.swapExactETHForTokens{value: net}(
+            minOut, path, to, deadline
         );
     }
 
-    /// @notice Swap exact tokens for ETH
+    /// @notice Swap exact tokens for ETH with slippage protection
     function swapExactTokensForETH(
         uint amountIn,
-        uint amountOutMin,
+        uint slippageBPS,
         address[] calldata path,
         address to,
         uint deadline
     ) external nonReentrant returns (uint[] memory amounts) {
         _validateDeadline(deadline);
+        _validateSlippage(slippageBPS);
         _validatePath(path);
         if (path[path.length - 1] != WETH) revert InvalidPath();
 
         address tokenIn = path[0];
-        
-        // Transfer and take fee
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
-        uint netAmount = _takeFee(tokenIn, amountIn);
-        
-        // Swap to WETH
-        IERC20(tokenIn).approve(address(uniswapRouter), netAmount);
+
+        uint fee = (amountIn * feeBps) / BPS_DENOMINATOR;
+        uint net = amountIn - fee;
+        if (fee > 0) IERC20(tokenIn).transfer(feeRecipient, fee);
+
+        // Calculate minimum output with slippage protection
+        uint[] memory q = uniswapRouter.getAmountsOut(net, path);
+        uint minOut = (q[q.length - 1] * (BPS_DENOMINATOR - slippageBPS)) / BPS_DENOMINATOR;
+
+        IERC20(tokenIn).approve(address(uniswapRouter), net);
         amounts = uniswapRouter.swapExactTokensForETH(
-            netAmount,
-            amountOutMin,
-            path,
-            address(this),
-            deadline
+            net, minOut, path, to, deadline
         );
-        
-        // Unwrap and send ETH
-        _unwrapAndSendETH(to, amounts[amounts.length - 1]);
     }
 
     /*//////////////////////////////////////////////////////////////
-                        SWAP FUNCTIONS - EXACT OUTPUT
+                    EXACT OUTPUT SWAPS (WITH SLIPPAGE)
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Swap tokens for exact tokens
+    /// @notice Swap tokens for exact tokens with slippage protection on input
+    /// @param slippageBPS Maximum additional input tolerance in basis points
     function swapTokensForExactTokens(
         uint amountOut,
-        uint amountInMax,
+        uint slippageBPS,
         address[] calldata path,
         address to,
         uint deadline
     ) external nonReentrant returns (uint[] memory amounts) {
         _validateDeadline(deadline);
+        _validateSlippage(slippageBPS);
         _validatePath(path);
-        _validateTokens(path[0], path[path.length - 1]);
 
         address tokenIn = path[0];
         
-        // Transfer max amount from user
-        IERC20(tokenIn).transferFrom(msg.sender, address(this), amountInMax);
+        // Get exact amounts needed
+        uint[] memory q = uniswapRouter.getAmountsIn(amountOut, path);
+        uint amountInNeeded = q[0];
         
-        // Take fee
-        uint netMax = _takeFee(tokenIn, amountInMax);
+        // Add fee on top
+        uint fee = (amountInNeeded * feeBps) / BPS_DENOMINATOR;
+        uint totalNeeded = amountInNeeded + fee;
         
-        // Swap
-        IERC20(tokenIn).approve(address(uniswapRouter), netMax);
+        // Apply slippage tolerance to max input
+        uint maxInput = (totalNeeded * (BPS_DENOMINATOR + slippageBPS)) / BPS_DENOMINATOR;
+
+        IERC20(tokenIn).transferFrom(msg.sender, address(this), maxInput);
+
+        if (fee > 0) IERC20(tokenIn).transfer(feeRecipient, fee);
+
+        IERC20(tokenIn).approve(address(uniswapRouter), maxInput - fee);
         amounts = uniswapRouter.swapTokensForExactTokens(
-            amountOut,
-            netMax,
-            path,
-            to,
-            deadline
+            amountOut, maxInput - fee, path, to, deadline
         );
-        
-        // Refund unused tokens (CEI: refund after swap)
-        uint actualUsed = amounts[0];
-        if (netMax > actualUsed) {
-            IERC20(tokenIn).transfer(msg.sender, netMax - actualUsed);
+
+        // Refund excess
+        uint actualUsed = amounts[0] + fee;
+        if (maxInput > actualUsed) {
+            IERC20(tokenIn).transfer(msg.sender, maxInput - actualUsed);
         }
     }
 
-    /// @notice Swap ETH for exact tokens
+    /// @notice Swap ETH for exact tokens with slippage protection on input
     function swapETHForExactTokens(
         uint amountOut,
+        uint slippageBPS,
         address[] calldata path,
         address to,
         uint deadline
     ) external payable nonReentrant returns (uint[] memory amounts) {
         _validateDeadline(deadline);
+        _validateSlippage(slippageBPS);
         _validatePath(path);
         if (path[0] != WETH) revert InvalidPath();
+
+        // Get exact ETH needed
+        uint[] memory q = uniswapRouter.getAmountsIn(amountOut, path);
+        uint ethNeeded = q[0];
         
-        // Take fee from ETH
-        uint fee = (msg.value * feeBps) / BPS_DENOMINATOR;
-        uint netMax = msg.value - fee;
+        // Add fee on top
+        uint fee = (ethNeeded * feeBps) / BPS_DENOMINATOR;
+        uint totalNeeded = ethNeeded + fee;
         
+        // Apply slippage tolerance
+        uint maxETH = (totalNeeded * (BPS_DENOMINATOR + slippageBPS)) / BPS_DENOMINATOR;
+        if (msg.value < maxETH) revert ExcessiveInputAmount();
+
         if (fee > 0) {
-            (bool success, ) = feeRecipient.call{value: fee}("");
-            if (!success) revert ETHTransferFailed();
+            (bool ok,) = feeRecipient.call{value: fee}("");
+            if (!ok) revert ETHTransferFailed();
         }
-        
-        // Wrap and swap
-        _wrapETH(netMax);
-        IERC20(WETH).approve(address(uniswapRouter), netMax);
-        amounts = uniswapRouter.swapETHForExactTokens{value: 0}(
-            amountOut,
-            path,
-            to,
-            deadline
+
+        amounts = uniswapRouter.swapETHForExactTokens{value: msg.value - fee}(
+            amountOut, path, to, deadline
         );
-        
-        // Refund unused WETH as ETH
-        uint actualUsed = amounts[0];
-        if (netMax > actualUsed) {
-            _unwrapAndSendETH(msg.sender, netMax - actualUsed);
+
+        // Refund excess ETH
+        uint actualUsed = amounts[0] + fee;
+        if (msg.value > actualUsed) {
+            (bool ok,) = msg.sender.call{value: msg.value - actualUsed}("");
+            if (!ok) revert ETHTransferFailed();
         }
     }
 
-    /// @notice Swap tokens for exact ETH
+    /// @notice Swap tokens for exact ETH with slippage protection on input
     function swapTokensForExactETH(
         uint amountOut,
-        uint amountInMax,
+        uint slippageBPS,
         address[] calldata path,
         address to,
         uint deadline
     ) external nonReentrant returns (uint[] memory amounts) {
         _validateDeadline(deadline);
+        _validateSlippage(slippageBPS);
         _validatePath(path);
         if (path[path.length - 1] != WETH) revert InvalidPath();
 
         address tokenIn = path[0];
         
-        // Transfer and take fee
-        IERC20(tokenIn).transferFrom(msg.sender, address(this), amountInMax);
-        uint netMax = _takeFee(tokenIn, amountInMax);
+        // Get exact amounts needed
+        uint[] memory q = uniswapRouter.getAmountsIn(amountOut, path);
+        uint amountInNeeded = q[0];
         
-        // Swap to WETH
-        IERC20(tokenIn).approve(address(uniswapRouter), netMax);
+        // Add fee on top
+        uint fee = (amountInNeeded * feeBps) / BPS_DENOMINATOR;
+        uint totalNeeded = amountInNeeded + fee;
+        
+        // Apply slippage tolerance to max input
+        uint maxInput = (totalNeeded * (BPS_DENOMINATOR + slippageBPS)) / BPS_DENOMINATOR;
+
+        IERC20(tokenIn).transferFrom(msg.sender, address(this), maxInput);
+
+        if (fee > 0) IERC20(tokenIn).transfer(feeRecipient, fee);
+
+        IERC20(tokenIn).approve(address(uniswapRouter), maxInput - fee);
         amounts = uniswapRouter.swapTokensForExactETH(
-            amountOut,
-            netMax,
-            path,
-            address(this),
-            deadline
+            amountOut, maxInput - fee, path, to, deadline
         );
-        
-        // Unwrap and send ETH
-        _unwrapAndSendETH(to, amounts[amounts.length - 1]);
-        
-        // Refund unused tokens
-        uint actualUsed = amounts[0];
-        if (netMax > actualUsed) {
-            IERC20(tokenIn).transfer(msg.sender, netMax - actualUsed);
+
+        // Refund excess
+        uint actualUsed = amounts[0] + fee;
+        if (maxInput > actualUsed) {
+            IERC20(tokenIn).transfer(msg.sender, maxInput - actualUsed);
         }
     }
 
     /*//////////////////////////////////////////////////////////////
-                    SWAP FUNCTIONS - FEE ON TRANSFER
+                    FEE-ON-TRANSFER SWAPS (NO SLIPPAGE)
+                    (User provides amountOutMin directly)
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Swap exact tokens for tokens (supports fee-on-transfer tokens)
     function swapExactTokensForTokensSupportingFeeOnTransferTokens(
         uint amountIn,
         uint amountOutMin,
@@ -602,26 +325,20 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
     ) external nonReentrant {
         _validateDeadline(deadline);
         _validatePath(path);
-        _validateTokens(path[0], path[path.length - 1]);
 
         address tokenIn = path[0];
-        
-        // Transfer and take fee
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
-        uint netAmount = _takeFee(tokenIn, amountIn);
-        
-        // Swap
-        IERC20(tokenIn).approve(address(uniswapRouter), netAmount);
+
+        uint fee = (amountIn * feeBps) / BPS_DENOMINATOR;
+        uint net = amountIn - fee;
+        if (fee > 0) IERC20(tokenIn).transfer(feeRecipient, fee);
+
+        IERC20(tokenIn).approve(address(uniswapRouter), net);
         uniswapRouter.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-            netAmount,
-            amountOutMin,
-            path,
-            to,
-            deadline
+            net, amountOutMin, path, to, deadline
         );
     }
 
-    /// @notice Swap exact ETH for tokens (supports fee-on-transfer tokens)
     function swapExactETHForTokensSupportingFeeOnTransferTokens(
         uint amountOutMin,
         address[] calldata path,
@@ -631,28 +348,20 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         _validateDeadline(deadline);
         _validatePath(path);
         if (path[0] != WETH) revert InvalidPath();
-        
-        // Take fee
+
         uint fee = (msg.value * feeBps) / BPS_DENOMINATOR;
-        uint netAmount = msg.value - fee;
-        
+        uint net = msg.value - fee;
+
         if (fee > 0) {
-            (bool success, ) = feeRecipient.call{value: fee}("");
-            if (!success) revert ETHTransferFailed();
+            (bool ok,) = feeRecipient.call{value: fee}("");
+            if (!ok) revert ETHTransferFailed();
         }
-        
-        // Wrap and swap
-        _wrapETH(netAmount);
-        IERC20(WETH).approve(address(uniswapRouter), netAmount);
-        uniswapRouter.swapExactETHForTokensSupportingFeeOnTransferTokens{value: 0}(
-            amountOutMin,
-            path,
-            to,
-            deadline
+
+        uniswapRouter.swapExactETHForTokensSupportingFeeOnTransferTokens{value: net}(
+            amountOutMin, path, to, deadline
         );
     }
 
-    /// @notice Swap exact tokens for ETH (supports fee-on-transfer tokens)
     function swapExactTokensForETHSupportingFeeOnTransferTokens(
         uint amountIn,
         uint amountOutMin,
@@ -665,33 +374,25 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         if (path[path.length - 1] != WETH) revert InvalidPath();
 
         address tokenIn = path[0];
-        
-        // Transfer and take fee
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
-        uint netAmount = _takeFee(tokenIn, amountIn);
-        
-        // Swap to WETH
-        IERC20(tokenIn).approve(address(uniswapRouter), netAmount);
-        
-        uint balanceBefore = IERC20(WETH).balanceOf(address(this));
+
+        uint fee = (amountIn * feeBps) / BPS_DENOMINATOR;
+        uint net = amountIn - fee;
+        if (fee > 0) IERC20(tokenIn).transfer(feeRecipient, fee);
+
+        IERC20(tokenIn).approve(address(uniswapRouter), net);
         uniswapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
-            netAmount,
-            amountOutMin,
-            path,
-            address(this),
-            deadline
+            net, amountOutMin, path, to, deadline
         );
-        uint balanceAfter = IERC20(WETH).balanceOf(address(this));
-        
-        // Unwrap and send actual received amount
-        _unwrapAndSendETH(to, balanceAfter - balanceBefore);
     }
 
     /*//////////////////////////////////////////////////////////////
-                            ADD LIQUIDITY
+                        LIQUIDITY (FEES ON BOTH TOKENS)
+                        (Slippage via amountMin parameters)
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Add liquidity to token pair
+    /// @notice addLiquidity with fee on BOTH tokenA and tokenB
+    /// @dev Slippage protection via amountAMin and amountBMin
     function addLiquidity(
         address tokenA,
         address tokenB,
@@ -703,17 +404,21 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         uint deadline
     ) external nonReentrant returns (uint amountA, uint amountB, uint liquidity) {
         _validateDeadline(deadline);
-        _validateTokens(tokenA, tokenB);
+        if (tokenA == tokenB) revert SameToken();
 
-        // Transfer tokens
         IERC20(tokenA).transferFrom(msg.sender, address(this), amountADesired);
         IERC20(tokenB).transferFrom(msg.sender, address(this), amountBDesired);
 
-        // Take fees
-        uint netA = _takeFee(tokenA, amountADesired);
-        uint netB = _takeFee(tokenB, amountBDesired);
+        // Calculate fees for both tokens
+        uint feeA = (amountADesired * feeBps) / BPS_DENOMINATOR;
+        uint feeB = (amountBDesired * feeBps) / BPS_DENOMINATOR;
+        uint netA = amountADesired - feeA;
+        uint netB = amountBDesired - feeB;
 
-        // Add liquidity
+        // Transfer fees
+        if (feeA > 0) IERC20(tokenA).transfer(feeRecipient, feeA);
+        if (feeB > 0) IERC20(tokenB).transfer(feeRecipient, feeB);
+
         IERC20(tokenA).approve(address(uniswapRouter), netA);
         IERC20(tokenB).approve(address(uniswapRouter), netB);
 
@@ -728,12 +433,13 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
             deadline
         );
 
-        // Refund unused tokens (CEI)
+        // Refund excess
         if (netA > amountA) IERC20(tokenA).transfer(msg.sender, netA - amountA);
         if (netB > amountB) IERC20(tokenB).transfer(msg.sender, netB - amountB);
     }
 
-    /// @notice Add liquidity with ETH
+    /// @notice addLiquidityETH with fee on BOTH ETH and token
+    /// @dev Slippage protection via amountTokenMin and amountETHMin
     function addLiquidityETH(
         address token,
         uint amountTokenDesired,
@@ -741,52 +447,57 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         uint amountETHMin,
         address to,
         uint deadline
-    ) external payable nonReentrant returns (uint amountToken, uint amountETH, uint liquidity) {
+    ) external payable nonReentrant
+      returns (uint amountToken, uint amountETH, uint liquidity)
+    {
         _validateDeadline(deadline);
-        _validateToken(token);
-        if (token == WETH) revert SameToken();
 
-        // Transfer token and take fee
-        IERC20(token).transferFrom(msg.sender, address(this), amountTokenDesired);
-        uint netToken = _takeFee(token, amountTokenDesired);
-
-        // Take fee from ETH
+        // Calculate fees for both ETH and token
         uint feeETH = (msg.value * feeBps) / BPS_DENOMINATOR;
+        uint feeToken = (amountTokenDesired * feeBps) / BPS_DENOMINATOR;
         uint netETH = msg.value - feeETH;
-        
+        uint netToken = amountTokenDesired - feeToken;
+
+        // Transfer ETH fee
         if (feeETH > 0) {
-            (bool success, ) = feeRecipient.call{value: feeETH}("");
-            if (!success) revert ETHTransferFailed();
+            (bool ok,) = feeRecipient.call{value: feeETH}("");
+            if (!ok) revert ETHTransferFailed();
         }
 
-        // Wrap ETH
-        _wrapETH(netETH);
+        IERC20(token).transferFrom(msg.sender, address(this), amountTokenDesired);
+        
+        // Transfer token fee
+        if (feeToken > 0) IERC20(token).transfer(feeRecipient, feeToken);
 
-        // Add liquidity
         IERC20(token).approve(address(uniswapRouter), netToken);
-        IERC20(WETH).approve(address(uniswapRouter), netETH);
 
-        (amountToken, amountETH, liquidity) = uniswapRouter.addLiquidity(
-            token,
-            WETH,
-            netToken,
-            netETH,
-            amountTokenMin,
-            amountETHMin,
-            to,
-            deadline
-        );
+        (amountToken, amountETH, liquidity) =
+            uniswapRouter.addLiquidityETH{value: netETH}(
+                token,
+                netToken,
+                amountTokenMin,
+                amountETHMin,
+                to,
+                deadline
+            );
 
-        // Refund unused
-        if (netToken > amountToken) IERC20(token).transfer(msg.sender, netToken - amountToken);
-        if (netETH > amountETH) _unwrapAndSendETH(msg.sender, netETH - amountETH);
+        // Refund excess ETH
+        if (netETH > amountETH) {
+            (bool ok,) = msg.sender.call{value: netETH - amountETH}("");
+            if (!ok) revert ETHTransferFailed();
+        }
+
+        // Refund excess token
+        if (netToken > amountToken) {
+            IERC20(token).transfer(msg.sender, netToken - amountToken);
+        }
     }
 
     /*//////////////////////////////////////////////////////////////
-                          REMOVE LIQUIDITY
+                        REMOVE LIQUIDITY (NO FEES)
+                        (Slippage via amountMin parameters)
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Remove liquidity from token pair
     function removeLiquidity(
         address tokenA,
         address tokenB,
@@ -795,30 +506,20 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         uint amountBMin,
         address to,
         uint deadline
-    ) external nonReentrant returns (uint amountA, uint amountB) {
+    ) external nonReentrant returns (uint, uint) {
         _validateDeadline(deadline);
-        _validateTokens(tokenA, tokenB);
 
         address pair = uniswapFactory.getPair(tokenA, tokenB);
         if (pair == address(0)) revert PairDoesNotExist();
 
-        // Transfer LP tokens
         IUniswapV2Pair(pair).transferFrom(msg.sender, address(this), liquidity);
         IERC20(pair).approve(address(uniswapRouter), liquidity);
 
-        // Remove liquidity
-        (amountA, amountB) = uniswapRouter.removeLiquidity(
-            tokenA,
-            tokenB,
-            liquidity,
-            amountAMin,
-            amountBMin,
-            to,
-            deadline
+        return uniswapRouter.removeLiquidity(
+            tokenA, tokenB, liquidity, amountAMin, amountBMin, to, deadline
         );
     }
 
-    /// @notice Remove liquidity and receive ETH
     function removeLiquidityETH(
         address token,
         uint liquidity,
@@ -828,125 +529,18 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         uint deadline
     ) external nonReentrant returns (uint amountToken, uint amountETH) {
         _validateDeadline(deadline);
-        _validateToken(token);
-        if (token == WETH) revert SameToken();
 
         address pair = uniswapFactory.getPair(token, WETH);
         if (pair == address(0)) revert PairDoesNotExist();
 
-        // Transfer and approve LP tokens
         IUniswapV2Pair(pair).transferFrom(msg.sender, address(this), liquidity);
         IERC20(pair).approve(address(uniswapRouter), liquidity);
 
-        // Remove liquidity to this contract
-        (amountToken, amountETH) = uniswapRouter.removeLiquidity(
-            token,
-            WETH,
-            liquidity,
-            amountTokenMin,
-            amountETHMin,
-            address(this),
-            deadline
-        );
-
-        // Transfer token to user
-        IERC20(token).transfer(to, amountToken);
-        
-        // Unwrap and send ETH
-        _unwrapAndSendETH(to, amountETH);
-    }
-
-    /*//////////////////////////////////////////////////////////////
-                    REMOVE LIQUIDITY WITH PERMIT
-    //////////////////////////////////////////////////////////////*/
-
-    /// @notice Remove liquidity using permit
-    function removeLiquidityWithPermit(
-        address tokenA,
-        address tokenB,
-        uint liquidity,
-        uint amountAMin,
-        uint amountBMin,
-        address to,
-        uint deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external nonReentrant returns (uint amountA, uint amountB) {
-        _validateDeadline(deadline);
-        _validateTokens(tokenA, tokenB);
-
-        address pair = uniswapFactory.getPair(tokenA, tokenB);
-        if (pair == address(0)) revert PairDoesNotExist();
-
-        // Use permit
-        uint value = approveMax ? type(uint).max : liquidity;
-        IUniswapV2Pair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
-
-        // Transfer and remove
-        IUniswapV2Pair(pair).transferFrom(msg.sender, address(this), liquidity);
-        IERC20(pair).approve(address(uniswapRouter), liquidity);
-
-        (amountA, amountB) = uniswapRouter.removeLiquidity(
-            tokenA,
-            tokenB,
-            liquidity,
-            amountAMin,
-            amountBMin,
-            to,
-            deadline
+        return uniswapRouter.removeLiquidityETH(
+            token, liquidity, amountTokenMin, amountETHMin, to, deadline
         );
     }
 
-    /// @notice Remove liquidity ETH using permit
-    function removeLiquidityETHWithPermit(
-        address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external nonReentrant returns (uint amountToken, uint amountETH) {
-        _validateDeadline(deadline);
-        _validateToken(token);
-        if (token == WETH) revert SameToken();
-
-        address pair = uniswapFactory.getPair(token, WETH);
-        if (pair == address(0)) revert PairDoesNotExist();
-
-        // Use permit
-        uint value = approveMax ? type(uint).max : liquidity;
-        IUniswapV2Pair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
-
-        // Transfer and remove
-        IUniswapV2Pair(pair).transferFrom(msg.sender, address(this), liquidity);
-        IERC20(pair).approve(address(uniswapRouter), liquidity);
-
-        (amountToken, amountETH) = uniswapRouter.removeLiquidity(
-            token,
-            WETH,
-            liquidity,
-            amountTokenMin,
-            amountETHMin,
-            address(this),
-            deadline
-        );
-
-        // Transfer token and unwrap ETH
-        IERC20(token).transfer(to, amountToken);
-        _unwrapAndSendETH(to, amountETH);
-    }
-
-    /*//////////////////////////////////////////////////////////////
-            REMOVE LIQUIDITY - FEE ON TRANSFER SUPPORT
-    //////////////////////////////////////////////////////////////*/
-
-    /// @notice Remove liquidity ETH (supports fee-on-transfer tokens)
     function removeLiquidityETHSupportingFeeOnTransferTokens(
         address token,
         uint liquidity,
@@ -956,117 +550,65 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
         uint deadline
     ) external nonReentrant returns (uint amountETH) {
         _validateDeadline(deadline);
-        _validateToken(token);
-        if (token == WETH) revert SameToken();
 
         address pair = uniswapFactory.getPair(token, WETH);
         if (pair == address(0)) revert PairDoesNotExist();
 
-        // Transfer and approve LP tokens
         IUniswapV2Pair(pair).transferFrom(msg.sender, address(this), liquidity);
         IERC20(pair).approve(address(uniswapRouter), liquidity);
 
-        // Check balances before
-        uint tokenBalBefore = IERC20(token).balanceOf(address(this));
-        uint wethBalBefore = IERC20(WETH).balanceOf(address(this));
-
-        // Remove liquidity
-        uniswapRouter.removeLiquidity(
-            token,
-            WETH,
-            liquidity,
-            amountTokenMin,
-            amountETHMin,
-            address(this),
-            deadline
+        return uniswapRouter.removeLiquidityETHSupportingFeeOnTransferTokens(
+            token, liquidity, amountTokenMin, amountETHMin, to, deadline
         );
-
-        // Calculate actual received amounts
-        uint tokenReceived = IERC20(token).balanceOf(address(this)) - tokenBalBefore;
-        amountETH = IERC20(WETH).balanceOf(address(this)) - wethBalBefore;
-
-        // Transfer actual received token amount
-        IERC20(token).transfer(to, tokenReceived);
-        
-        // Unwrap and send ETH
-        _unwrapAndSendETH(to, amountETH);
-    }
-
-    /// @notice Remove liquidity ETH with permit (supports fee-on-transfer tokens)
-    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
-        address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external nonReentrant returns (uint amountETH) {
-        _validateDeadline(deadline);
-        _validateToken(token);
-        if (token == WETH) revert SameToken();
-
-        address pair = uniswapFactory.getPair(token, WETH);
-        if (pair == address(0)) revert PairDoesNotExist();
-
-        // Use permit
-        uint value = approveMax ? type(uint).max : liquidity;
-        IUniswapV2Pair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
-
-        // Transfer and approve LP tokens
-        IUniswapV2Pair(pair).transferFrom(msg.sender, address(this), liquidity);
-        IERC20(pair).approve(address(uniswapRouter), liquidity);
-
-        // Check balances before
-        uint tokenBalBefore = IERC20(token).balanceOf(address(this));
-        uint wethBalBefore = IERC20(WETH).balanceOf(address(this));
-
-        // Remove liquidity
-        uniswapRouter.removeLiquidity(
-            token,
-            WETH,
-            liquidity,
-            amountTokenMin,
-            amountETHMin,
-            address(this),
-            deadline
-        );
-
-        // Calculate actual received amounts
-        uint tokenReceived = IERC20(token).balanceOf(address(this)) - tokenBalBefore;
-        amountETH = IERC20(WETH).balanceOf(address(this)) - wethBalBefore;
-
-        // Transfer actual received token amount
-        IERC20(token).transfer(to, tokenReceived);
-        
-        // Unwrap and send ETH
-        _unwrapAndSendETH(to, amountETH);
     }
 
     /*//////////////////////////////////////////////////////////////
-                            CREATE PAIR
+                        VIEW FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Create a new pair if it doesn't exist
-    function createPairIfNotExists(address tokenA, address tokenB) external returns (address pair) {
-        _validateTokens(tokenA, tokenB);
+    function quote(uint amountA, uint reserveA, uint reserveB) 
+        external pure returns (uint amountB) 
+    {
+        return uniswapRouter.quote(amountA, reserveA, reserveB);
+    }
 
-        pair = uniswapFactory.getPair(tokenA, tokenB);
-        if (pair == address(0)) {
-            pair = uniswapFactory.createPair(tokenA, tokenB);
-        }
+    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) 
+        external pure returns (uint amountOut) 
+    {
+        return uniswapRouter.getAmountOut(amountIn, reserveIn, reserveOut);
+    }
+
+    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) 
+        external pure returns (uint amountIn) 
+    {
+        return uniswapRouter.getAmountIn(amountOut, reserveIn, reserveOut);
+    }
+
+    function getAmountsOut(uint amountIn, address[] calldata path) 
+        external view returns (uint[] memory amounts) 
+    {
+        return uniswapRouter.getAmountsOut(amountIn, path);
+    }
+
+    function getAmountsIn(uint amountOut, address[] calldata path) 
+        external view returns (uint[] memory amounts) 
+    {
+        return uniswapRouter.getAmountsIn(amountOut, path);
     }
 
     /*//////////////////////////////////////////////////////////////
-                        RECEIVE ETH
+                        PAIR CREATION
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Receive ETH (for WETH unwrapping)
-    receive() external payable {
-        // Only accept ETH from WETH contract
-        if (msg.sender != WETH) revert ETHTransferFailed();
+    function createPairIfNotExists(address a, address b)
+        external returns (address pair)
+    {
+        if (a == b) revert SameToken();
+        if (a == address(0) || b == address(0)) revert ZeroAddress();
+
+        pair = uniswapFactory.getPair(a, b);
+        if (pair == address(0)) pair = uniswapFactory.createPair(a, b);
     }
+
+    receive() external payable {}
 }
