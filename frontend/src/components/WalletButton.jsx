@@ -1,15 +1,11 @@
 import { useWallet } from "../context/WalletContext";
 
-
 export default function WalletButton() {
   const { account, connect } = useWallet();
 
   if (!account) {
     return (
-      <button
-        onClick={connect}
-        className="px-4 py-2 bg-primary rounded"
-      >
+      <button onClick={connect} className="px-4 py-2 bg-primary rounded">
         Connect Wallet
       </button>
     );

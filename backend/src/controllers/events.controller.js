@@ -1,70 +1,60 @@
-import { getPairEvents } from '../services/events.service.js'
+import { getPairEvents } from "../services/events.service.js";
 
 export async function getSwapEvents(req, res, next) {
   try {
-    const {
-      pair,
-      fromBlock,
-      toBlock,
-      chain = 'ethereum'
-    } = req.query
+    const { pair, fromBlock, toBlock, chain = "ethereum" } = req.query;
 
     if (!pair || !fromBlock || !toBlock) {
       return res.status(400).json({
-        error: 'pair, fromBlock, toBlock required'
-      })
+        error: "pair, fromBlock, toBlock required",
+      });
     }
 
     const events = await getPairEvents({
       pairAddress: pair.toLowerCase(),
-      eventName: 'Swap',
+      eventName: "Swap",
       fromBlock: Number(fromBlock),
       toBlock: Number(toBlock),
-      chain
-    })
+      chain,
+    });
 
-    res.json(events)
+    res.json(events);
   } catch (err) {
-    next(err)
+    next(err);
   }
 }
 
 export async function getLiquidityEvents(req, res, next) {
   try {
-    const {
-      pair,
-      fromBlock,
-      toBlock,
-      chain = 'ethereum'
-    } = req.query
+    const { pair, fromBlock, toBlock, chain = "ethereum" } = req.query;
 
     if (!pair || !fromBlock || !toBlock) {
       return res.status(400).json({
-        error: 'pair, fromBlock, toBlock required'
-      })
+        error: "pair, fromBlock, toBlock required",
+      });
     }
 
     const mint = await getPairEvents({
       pairAddress: pair.toLowerCase(),
-      eventName: 'Mint',
+      eventName: "Mint",
       fromBlock: Number(fromBlock),
       toBlock: Number(toBlock),
-      chain
-    })
+      chain,
+    });
 
     const burn = await getPairEvents({
       pairAddress: pair.toLowerCase(),
-      eventName: 'Burn',
+      eventName: "Burn",
       fromBlock: Number(fromBlock),
       toBlock: Number(toBlock),
-      chain
-    })
+      chain,
+    });
 
     res.json({
       mint,
-      burn
-    })
+      burn,
+    });
   } catch (err) {
-    next(err)
+    next(err);
   }
 }

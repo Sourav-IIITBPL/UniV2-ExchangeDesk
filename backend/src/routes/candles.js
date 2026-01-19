@@ -1,8 +1,8 @@
-import { Router } from 'express'
-import { getPairCandles } from '../controllers/candles.controller.js'
+import { Router } from "express";
+import { getPairCandles } from "../controllers/candles.controller.js";
 
-const router = Router()
+const router = Router();
 
-router.get('/', getPairCandles)
+router.get("/", getPairCandles);
 
-export default router
+export default router;

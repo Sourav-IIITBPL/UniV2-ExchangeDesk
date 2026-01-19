@@ -1,25 +1,27 @@
 const chains = {
+  // mainnet
   ethereum: {
     chainId: 1,
-    name: 'Ethereum',
+    name: "Ethereum",
     rpcUrl: process.env.ETH_RPC_URL,
-    nativeCurrency: 'ETH'
+    nativeCurrency: "ETH",
   },
   arbitrum: {
     chainId: 42161,
-    name: 'Arbitrum',
+    name: "Arbitrum",
     rpcUrl: process.env.ARBITRUM_RPC_URL,
-    nativeCurrency: 'ETH'
+    nativeCurrency: "ETH",
   },
   polygon: {
     chainId: 137,
-    name: 'Polygon',
+    name: "Polygon",
     rpcUrl: process.env.POLYGON_RPC_URL,
-    nativeCurrency: 'MATIC'
-  }
+    nativeCurrency: "MATIC",
+  },
+  
+  // testnets
 
 
-}
+};
 
-export default chains
-
+export default chains;

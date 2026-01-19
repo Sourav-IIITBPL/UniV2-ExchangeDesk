@@ -48,53 +48,52 @@ No database initially.
 
 backend/
 ├── src/
-│   ├── server.js
-│   ├── app.js
-│   │
-│   ├── routes/
-│   │   ├── health.js              # liveness / readiness
-│   │   ├── tokens.js              # ERC20 metadata
-│   │   ├── pairs.js               # pairs list, details, existence
-│   │   ├── events.js              # swaps, mint, burn
-│   │   ├── candles.js             # OHLC data
-│   │   └── stats.js               # global protocol stats
-│   │
-│   ├── controllers/
-│   │   ├── tokens.controller.js
-│   │   ├── pairs.controller.js
-│   │   ├── events.controller.js
-│   │   ├── candles.controller.js
-│   │   └── stats.controller.js
-│   │
-│   ├── services/
-│   │   ├── rpc.service.js          # provider abstraction
-│   │   ├── uniswap.service.js      # factory / pair logic
-│   │   ├── token.service.js        # ERC20 reads
-│   │   ├── events.service.js       # logs & decoding
-│   │   ├── stats.service.js        # aggregation logic
-│   │   └── cache.service.js        # in-memory cache
-│   │
-│   ├── contracts/
-│   │   ├── UniswapV2Factory.json
-│   │   ├── UniswapV2Pair.json
-│   │   └── ERC20.json
-│   │
-│   ├── config/
-│   │   ├── chains.js               # chain configs (ETH first)
-│   │   ├── addresses.js            # factory/router addresses
-│   │   └── env.js                  # env validation
-│   │
-│   ├── utils/
-│   │   ├── bigint.js               # bigint → string helpers
-│   │   ├── math.js                 # price, TVL math
-│   │   ├── formatting.js           # API formatting
-│   │   └── blocks.js               # block range helpers
-│   │
-│   └── constants/
-│       ├── cacheKeys.js
-│       └── time.js
+│ ├── server.js
+│ ├── app.js
+│ │
+│ ├── routes/
+│ │ ├── health.js # liveness / readiness
+│ │ ├── tokens.js # ERC20 metadata
+│ │ ├── pairs.js # pairs list, details, existence
+│ │ ├── events.js # swaps, mint, burn
+│ │ ├── candles.js # OHLC data
+│ │ └── stats.js # global protocol stats
+│ │
+│ ├── controllers/
+│ │ ├── tokens.controller.js
+│ │ ├── pairs.controller.js
+│ │ ├── events.controller.js
+│ │ ├── candles.controller.js
+│ │ └── stats.controller.js
+│ │
+│ ├── services/
+│ │ ├── rpc.service.js # provider abstraction
+│ │ ├── uniswap.service.js # factory / pair logic
+│ │ ├── token.service.js # ERC20 reads
+│ │ ├── events.service.js # logs & decoding
+│ │ ├── stats.service.js # aggregation logic
+│ │ └── cache.service.js # in-memory cache
+│ │
+│ ├── contracts/
+│ │ ├── UniswapV2Factory.json
+│ │ ├── UniswapV2Pair.json
+│ │ └── ERC20.json
+│ │
+│ ├── config/
+│ │ ├── chains.js # chain configs (ETH first)
+│ │ ├── addresses.js # factory/router addresses
+│ │ └── env.js # env validation
+│ │
+│ ├── utils/
+│ │ ├── bigint.js # bigint → string helpers
+│ │ ├── math.js # price, TVL math
+│ │ ├── formatting.js # API formatting
+│ │ └── blocks.js # block range helpers
+│ │
+│ └── constants/
+│ ├── cacheKeys.js
+│ └── time.js
 │
 ├── .env
 ├── package.json
 └── package-lock.json
-

@@ -1,4 +1,4 @@
-import { getCandles } from '../services/candles.service.js'
+import { getCandles } from "../services/candles.service.js";
 
 export async function getPairCandles(req, res, next) {
   try {
@@ -7,13 +7,13 @@ export async function getPairCandles(req, res, next) {
       fromBlock,
       toBlock,
       interval,
-      chain = 'ethereum'
-    } = req.query
+      chain = "ethereum",
+    } = req.query;
 
     if (!pair || !fromBlock || !toBlock || !interval) {
       return res.status(400).json({
-        error: 'pair, fromBlock, toBlock, interval required'
-      })
+        error: "pair, fromBlock, toBlock, interval required",
+      });
     }
 
     const candles = await getCandles({
@@ -21,11 +21,11 @@ export async function getPairCandles(req, res, next) {
       fromBlock: Number(fromBlock),
       toBlock: Number(toBlock),
       interval: Number(interval),
-      chain
-    })
+      chain,
+    });
 
-    res.json(candles)
+    res.json(candles);
   } catch (err) {
-    next(err)
+    next(err);
   }
 }

@@ -46,9 +46,7 @@ export default function Home() {
                 <td className="p-3">
                   {p.tokenA} / {p.tokenB}
                 </td>
-                <td className="text-right p-3">
-                  ${p.tvlUsd.toLocaleString()}
-                </td>
+                <td className="text-right p-3">${p.tvlUsd.toLocaleString()}</td>
               </tr>
             ))}
           </tbody>

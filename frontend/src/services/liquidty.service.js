@@ -17,7 +17,7 @@ export async function addLiquidity({
     amountAMin,
     amountBMin,
     to,
-    deadline
+    deadline,
   );
 }
 

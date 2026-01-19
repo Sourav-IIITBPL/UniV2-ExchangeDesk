@@ -11,6 +11,6 @@ export async function swapExactTokensForTokens({
     amountOutMin,
     path,
     to,
-    deadline
+    deadline,
   );
 }

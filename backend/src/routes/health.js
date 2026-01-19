@@ -1,12 +1,12 @@
-import { Router } from 'express'
+import { Router } from "express";
 
-const router = Router()
+const router = Router();
 
-router.get('/', (_, res) => {
+router.get("/", (_, res) => {
   res.json({
-    status: 'ok',
-    timestamp: Date.now()
-  })
-})
+    status: "ok",
+    timestamp: Date.now(),
+  });
+});
 
-export default router
+export default router;

@@ -3,9 +3,7 @@ import { TOKENS } from "../config/tokens";
 export default function TokenSelector({ chainId, value, onChange, label }) {
   if (!chainId) {
     return (
-      <div className="p-3 bg-border rounded text-sm">
-        Select chain first
-      </div>
+      <div className="p-3 bg-border rounded text-sm">Select chain first</div>
     );
   }
 

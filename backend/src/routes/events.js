@@ -1,12 +1,12 @@
-import { Router } from 'express'
+import { Router } from "express";
 import {
   getSwapEvents,
-  getLiquidityEvents
-} from '../controllers/events.controller.js'
+  getLiquidityEvents,
+} from "../controllers/events.controller.js";
 
-const router = Router()
+const router = Router();
 
-router.get('/swaps', getSwapEvents)
-router.get('/liquidity', getLiquidityEvents)
+router.get("/swaps", getSwapEvents);
+router.get("/liquidity", getLiquidityEvents);
 
-export default router
+export default router;
