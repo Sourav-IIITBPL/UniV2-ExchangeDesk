@@ -2,7 +2,7 @@ import { Contract } from 'ethers'
 import { getProvider } from './rpc.service.js'
 import { getTokenMetadata } from './token.service.js'
 import {normalizeReserve,computePrice,computeTVL} from '../utils/math.js'
-import pairAbi from '../contracts/UniswapV2Pair.json' assert { type: 'json' }
+import pairAbi from '../contracts/UniswapV2Pair.json' with { type: 'json' }
 
 export async function getPairDetails(pairAddress, chain) {
   const provider = getProvider(chain)
