@@ -1,13 +1,29 @@
-import { getAllPairs, checkPairExists } from "../services/uniswap.service.js";
+import {
+  getAllPairs,
+  getAllPairsLength,
+  checkPairExists,
+  getTopPairsByLiquidity,
+} from "../services/uniswap.service.js";
 import { getPairDetails } from "../services/pair.service.js";
 
 export async function listPairs(req, res, next) {
   try {
-    const { limit = 10, offset = 0, chain = "ethereum" } = req.query;
+    const {
+      limit = 10,
+      offset = 0,
+      protocol = "sushi",
+      chain = "polygon",
+      lastTVL = "999999999999999",
+    } = req.query;
 
-    const data = await getAllPairs(chain, Number(limit), Number(offset));
-
-    res.json(data);
+    // before wallet connect we use THeGraph to fetch the top pools by liquidity ,on other chains the logic is same as before
+    const data = await getTopPairsByLiquidity(chain, protocol, limit, lastTVL);
+    const totalPairs = await getAllPairsLength(chain, protocol);
+    res.json({
+      total: totalPairs,
+      count: data.length,
+      pairs: data, // This sends the full objects
+    });
   } catch (err) {
     next(err);
   }

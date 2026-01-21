@@ -1,18 +1,64 @@
-# React + Vite
+```js
+src/
+├─ app/
+│  ├─ App.jsx
+│  ├─ Router.jsx
+│  └─ Layout.jsx
+│
+├─ config/
+│  ├─ chains.js
+│  ├─ tokens.js
+│  ├─ routers.js
+│  └─ constants.js
+│
+├─ lib/
+│  ├─ provider.js
+│  ├─ signer.js
+│  ├─ contracts.js
+│  └─ switchNetwork.js
+│
+├─ hooks/
+│  ├─ useRouter.js
+│  ├─ useSlippage.js
+│  └─ useDeadline.js
+│
+├─ services/
+│  ├─ swap.service.js
+│  ├─ liquidity.service.js
+│  ├─ pool.service.js
+│  └─ portfolio.service.js
+│
+├─ components/
+│  ├─ Navbar.jsx
+│  ├─ WalletButton.jsx
+│  ├─ ChainSelector.jsx
+│  ├─ TokenSelector.jsx
+│  ├─ SwapBox.jsx
+│  ├─ PoolTable.jsx
+│  └─ LiquidityModal.jsx
+│
+├─ pages/
+│  ├─ Home.jsx
+│  ├─ Swap.jsx
+│  ├─ Liquidity.jsx
+│  ├─ Portfolio.jsx
+│  └─ CreatePool.jsx
+│
+└─ main.jsx
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+```
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+UI (React components)
+   ↓
+Hooks (deadline+router+slippage)
+   ↓
+Services (protocol actions)
+   ↓
+ExchangeDeskRouter (on-chain)
+And in parallel:
+Backend / RPC (read-only)
+   ↓
+Services
+   ↓
+Pages (Home, Portfolio, Liquidity lists)
+Your frontend is intentionally layered.

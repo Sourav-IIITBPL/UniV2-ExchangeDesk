@@ -46,6 +46,7 @@ helmet
 
 No database initially.
 
+```js
 backend/
 ├── src/
 │ ├── server.js
@@ -97,3 +98,4 @@ backend/
 ├── .env
 ├── package.json
 └── package-lock.json
+```
