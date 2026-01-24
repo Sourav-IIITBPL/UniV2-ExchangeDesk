@@ -8,7 +8,7 @@ import axios from "axios";
 
 function getFactory(chain, protocol) {
   const provider = getProvider(chain);
-  const factoryAddress = addresses[chain]?.[protocol]?.factory;
+  const factoryAddress = addresses[protocol]?.[chain]?.factory;
 
   if (!factoryAddress) {
     throw new Error(`Uniswap factory not configured for chain: ${chain}`);
@@ -74,19 +74,21 @@ const POOL_QUERY = `query getPoolMetrics($pairAddress: String!) {
   }
 }`;
 
-// 1. Updated Query to support cursor based pagination via "where" filter.
+// 1. Updated Query with Activity Metrics
 const TOP_PAIRS_QUERY = `
-  query GetTopPairs($limit: Int!, $lastTvl: BigDecimal!) {
+  query GetTopPairs($limit: Int!, $where: Pair_filter) {
     pairs(
       first: $limit, 
       orderBy: reserveUSD, 
       orderDirection: desc, 
-      where: { reserveUSD_lt: $lastTvl, reserveUSD_gt: "1000" }
+      where: $where
     ) {
       id
-      token0 { id symbol decimals }
-      token1 { id symbol decimals }
+      token0 { id symbol decimals name }
+      token1 { id symbol decimals name }
       reserveUSD
+      txCount
+      volumeUSD
     }
   }
 `;
@@ -94,6 +96,7 @@ const TOP_PAIRS_QUERY = `
 // 2. The Detailed Metrics Logic
 export async function getDetailedMetrics(url, pairAddress, feeOverride) {
   try {
+    
     const query = {
       query: POOL_QUERY,
       variables: { pairAddress: pairAddress.toLowerCase() },
@@ -147,19 +150,32 @@ export async function getTopPairsByLiquidity(
   chain,
   protocol,
   limit,
-  lastTVL = "999999999999999",
+  lastTVL = null,                           //default value for extra safety.
 ) {
-  const config = addresses[chain]?.[protocol];
+  const config = addresses[protocol]?.[chain];
   if (!config) throw new Error("Invalid selection");
 
   const graphEndpoint = `https://gateway.thegraph.com/api/${process.env.GRAPH_API_KEY}/subgraphs/id/${config.subgraphId}`;
 
+  // Step 1: Build the dynamic 'where' object
+  const variables = {
+    limit: limit,
+    where: {
+      reserveUSD_gt: "500",   // Minimum TVL $5k
+      txCount_gt: "50",       // MUST have at least 100 total trades (Filters out new scams)
+      volumeUSD_gt: "500",    // MUST have at least $1k total volume
+
+    }
+  };
+
+  // Step 2: Add the cursor ONLY if it exists
+  if (lastTVL) {
+    variables.where.reserveUSD_lt = lastTVL;
+  }
+
   const topPairsQuery = {
     query: TOP_PAIRS_QUERY,
-    variables: {
-      limit: limit,
-      lastTvl: lastTVL, // Cursor-based pagination
-    },
+    variables: variables,
   };
 
   try {

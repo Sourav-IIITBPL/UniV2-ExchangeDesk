@@ -12,6 +12,15 @@ const app = express();
 
 app.use(helmet());
 app.use(cors());
+// Manual CSP Header Fix for Development
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; connect-src 'self' http://localhost:4000;"
+  );
+  next();
+});
+
 app.use(express.json());
 
 app.use("/health", healthRoute);

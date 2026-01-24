@@ -99,3 +99,29 @@ backend/
 ├── package.json
 └── package-lock.json
 ```
+You are now tracking the most important V2 liquidity in the world:
+
+- Uniswap V2 (The Original)✓
+
+- SushiSwap (The Multi-chain Standard)✓
+
+- PancakeSwap (The BSC King, Ethereum , base , arbitrum) ✓
+
+- ShibaSwapV1 (Essential for Ethereum "meme" coins)✓
+
+BaseSwap (The primary V2 choice for Base)
+
+QuickSwap (The Polygon Standard)
+
+- pangolin   (only on avalacnhe)
+
+traderjoe
+
+
+
+
+
+// Velodrome	Optimism
+
+Camelot (V2)	Arbitrum
+

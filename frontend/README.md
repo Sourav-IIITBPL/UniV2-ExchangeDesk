@@ -62,3 +62,11 @@ Services
    ↓
 Pages (Home, Portfolio, Liquidity lists)
 Your frontend is intentionally layered.
+
+
+
+
+- Would you like me to help you create a "Global Search" bar that filters the table by token name across all your 7 protocols?
+
+//Would you like me to help you set up a Context Provider so this protocol data 
+// is available across all pages of your app without re-fetching?

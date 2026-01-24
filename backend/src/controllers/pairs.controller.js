@@ -9,11 +9,10 @@ import { getPairDetails } from "../services/pair.service.js";
 export async function listPairs(req, res, next) {
   try {
     const {
-      limit = 10,
-      offset = 0,
-      protocol = "sushi",
+      limit = 20,
       chain = "polygon",
-      lastTVL = "999999999999999",
+      protocol = "uniswap",
+      lastTVL = null,
     } = req.query;
 
     // before wallet connect we use THeGraph to fetch the top pools by liquidity ,on other chains the logic is same as before
