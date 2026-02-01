@@ -5,7 +5,6 @@
  */
 
 export const addresses = {
-
   uniswap: {
     ethereum: {
       factory: "0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f",
@@ -21,7 +20,7 @@ export const addresses = {
     polygon: {
       factory: "0x9e5A52f57b3038F1B8EeE45F28b3C1967e22799C",
       router: "0xedf6066a2b290C185783862C7F4776A2C8077AD1",
-      subgraphId:"EXBcAqmvQi6VAnE9X4MNK83LPeA6c1PsGskffbmThoeK",
+      subgraphId: "EXBcAqmvQi6VAnE9X4MNK83LPeA6c1PsGskffbmThoeK",
       fee: 0.003,
     },
     base: {
@@ -60,6 +59,7 @@ export const addresses = {
 
     sepolia: {
       factory: "0xF62c03E08ada871A0bEb309762E260a7a6a880E6",
+      exchange_router : "0xa4AA9d05f142dbd5893992B70A1E8157b4801a50",
       router: "0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3",
       subgraphId: "H7m6p6Yst8m69R8hEBCm2zF8L3X9Ld6uA6zJ1Ym6p6Yst",
       fee: 0.003,
@@ -110,7 +110,7 @@ export const addresses = {
       subgraphId: "QmZWaFzzzs7CEzpVeLrNqW6e7oNxG8AnkJt9kUEV5rFzxn",
       fee: 0.003,
     },
-    
+
     // test nets
     sepolia: {
       factory: "0x734583f62bb6ace3c9ba9bd5a53143ca2ce8c55a",
@@ -161,24 +161,17 @@ export const addresses = {
     ethereum: {
       factory: "0x115934131916C8b277DD010Ee02de363c09d037c",
       router: "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
-      subgraphId : "5g5jLdsqRSMuMqbCYoLkoFiEJtYpw3YqC1TXwohLRSHE",
-      fee:0.003,
+      subgraphId: "5g5jLdsqRSMuMqbCYoLkoFiEJtYpw3YqC1TXwohLRSHE",
+      fee: 0.003,
     },
     shibarium: {
       factory: "0xc2b4218F137e3A5A9B98ab3AE804108F0D312CBC",
       router: "0xEF83bbB63E8A7442E3a4a5d28d9bBf32D7c813c8",
       subgraphId: "78J4vLp9VeW2NfwSFWucLtf613247EgiMb6YRuyT4F",
       fee: 0.003,
-    }
+    },
   },
-
-
-}
-
-
-
-
-
+};
 
 // polygon: {
 
@@ -187,7 +180,6 @@ export const addresses = {
 //       subgraphId: "EXBcAqmvQi6VAnE9X4MNK83LPeA6c1PsGskffbmThoeK",
 //         fee: 0.003,
 //     },
-
 
 //   avalanche: {
 
@@ -207,10 +199,6 @@ export const addresses = {
 //   },
 
 // },
-
-
-
-
 
 //   };
 

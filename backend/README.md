@@ -99,6 +99,7 @@ backend/
 ├── package.json
 └── package-lock.json
 ```
+
 You are now tracking the most important V2 liquidity in the world:
 
 - Uniswap V2 (The Original)✓
@@ -113,15 +114,10 @@ BaseSwap (The primary V2 choice for Base)
 
 QuickSwap (The Polygon Standard)
 
-- pangolin   (only on avalacnhe)
+- pangolin (only on avalacnhe)
 
 traderjoe
 
+// Velodrome Optimism
 
-
-
-
-// Velodrome	Optimism
-
-Camelot (V2)	Arbitrum
-
+Camelot (V2) Arbitrum

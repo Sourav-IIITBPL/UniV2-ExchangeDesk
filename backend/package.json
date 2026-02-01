@@ -12,11 +12,17 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@pancakeswap/sdk": "^5.8.18",
+    "@shibaswap/sdk": "^1.1.19",
+    "@uniswap/v2-sdk": "^4.17.0",
     "axios": "^1.13.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "ethers": "^6.16.0",
     "express": "^5.2.1",
-    "helmet": "^8.1.0"
+    "helmet": "^8.1.0",
+    "sushi": "^6.4.11",
+    "viem": "^2.45.0",
+    "zod": "^4.3.6"
   }
 }

@@ -50,6 +50,12 @@ const chains = {
   },
 
   // testnets
+  sepolia: {
+    chainId: 11155111,
+    name: "Sepolia",
+    rpcUrl: process.env.SEPOLIA_RPC_URL,
+    nativeCurrency: "ETH",
+  }
 };
 
 export default chains;

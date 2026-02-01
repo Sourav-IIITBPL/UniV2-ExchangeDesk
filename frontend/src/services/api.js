@@ -18,11 +18,13 @@ export async function apiGet(path) {
 // top Boxes - defiLama api
 
 export const PROTOCOLS_CONFIG = [
-  { name: "Uniswap V2", slug: "uniswap-v2", icon: "https://cryptologos.cc/logos/uniswap-uni-logo.png" },
-  { name: "Sushiswap", slug: "sushiswap", icon: "https://cryptologos.cc/logos/sushiswap-sushi-logo.png" },
-  { name: "PancakeSwap", slug: "pancakeswap", icon: "https://tokens.pancakeswap.finance/images/symbol/cake.png" },
-  { name: "Quickswap", slug: "quickswap", icon: "https://assets.coingecko.com/coins/images/13970/small/quickswap.png" },
-  { name: "BaseSwap", slug: "baseswap", icon: "https://baseswap.fi/images/baseswap-logo.png" }
+  { name: "UniSwap", id: "uniswap", slug: "uniswap-v2", icon: "https://icons.llamao.fi/icons/protocols/uniswap-v2?w=55&h=55" },
+  { name: "SushiSwap", id: "sushi", slug: "sushiswap", icon: "https://icons.llamao.fi/icons/protocols/sushiswap?w=55&h=55" },
+  { name: "PancakeSwap", id: "pancake", slug: "pancakeswap-amm", icon: "https://icons.llamao.fi/icons/protocols/pancakeswap-amm?w=55&h=55" },
+  { name: "QuickSwap", id: "quickswap", slug: "quickswap", icon: "https://icons.llamao.fi/icons/protocols/quickswap?w=55&h=55" },
+  { name: "ShibaSwap", id: "shibaswap", slug: "shibaswap", icon: "https://icons.llamao.fi/icons/protocols/shibaswap?w=55&h=55" },
+  { name: "Pangolin", id: "pangolin", slug: "pangolin", icon: "https://icons.llamao.fi/icons/protocols/pangolin?w=55&h=55" },
+  { name: "BaseSwap", id: "baseswap", slug: "baseswap-v2", icon: "https://icons.llamao.fi/icons/protocols/baseswap-v2?w=55&h=55" }
 ];
 
 export const CHAINS = [
@@ -39,7 +41,7 @@ export const CHAINS = [
   { 
     id: "base", 
     name: "Base", 
-    logo: "https://raw.githubusercontent.com/base-org/brand-kit/main/logo/symbol/Base_Symbol_Blue.png" 
+    logo: "https://icons.llamao.fi/icons/chains/rsz_base.jpg"
   },
   { 
     id: "arbitrum", 
@@ -54,7 +56,7 @@ export const CHAINS = [
   { 
     id: "unichain", 
     name: "Unichain", 
-    logo: "https://assets.unichain.org/icon.png" // Official Unichain Brand Icon
+   logo: "https://icons.llamao.fi/icons/chains/rsz_unichain.jpg"
   },
   { 
     id: "bsc", 
@@ -69,6 +71,6 @@ export const CHAINS = [
   { 
     id: "shibarium", 
     name: "Shibarium", 
-    logo: "https://www.shibariumscan.io/images/network_icon.png" // Official Shibarium Explorer Icon
+   logo: "https://icons.llamao.fi/icons/protocols/shibaswap?w=80&h=80",
   }
 ];

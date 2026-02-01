@@ -8,10 +8,10 @@ import { apiGet } from "./api";
 /**
  * Fetch and map pools from the backend with detailed metrics
  */
-export async function fetchAllPools({ chain = "ethereum", protocol = "uniswap", lastTVL = null }) {
+export async function fetchAllPools({ limit = null, chain = "ethereum", protocol = "uniswap", lastTVL = null }) {
   // Pass the lastTVL as a query parameter for infinite scroll
   // A cleaner way to write your 3-param logic
-const path = `/pairs?chain=${chain}&protocol=${protocol}${lastTVL ? `&lastTVL=${lastTVL}` : ""}`;
+const path = `/pairs?${limit ? `limit=${limit}` : ""}&chain=${chain}&protocol=${protocol}${lastTVL ? `&lastTVL=${lastTVL}` : ""}`;
   const data = await apiGet(path);
 
   // The backend returns { total, count, pairs: [...] }

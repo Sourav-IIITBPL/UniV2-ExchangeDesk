@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getExchangeDeskRouter } from "../lib/contracts";
 
-export function useRouter(chainId) {
+export function useRouter(chainId = 11155111) {
   const [router, setRouter] = useState(null);
 
   useEffect(() => {

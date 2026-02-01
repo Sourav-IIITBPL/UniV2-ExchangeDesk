@@ -96,7 +96,6 @@ const TOP_PAIRS_QUERY = `
 // 2. The Detailed Metrics Logic
 export async function getDetailedMetrics(url, pairAddress, feeOverride) {
   try {
-    
     const query = {
       query: POOL_QUERY,
       variables: { pairAddress: pairAddress.toLowerCase() },
@@ -143,14 +142,13 @@ export async function getDetailedMetrics(url, pairAddress, feeOverride) {
 
 /**
  * @param {string} lastTVL - The reserveUSD of the last pool in your list.
- * Pass "999999999999" (or very high number) for the first call.
  */
 
 export async function getTopPairsByLiquidity(
   chain,
   protocol,
   limit,
-  lastTVL = null,                           //default value for extra safety.
+  lastTVL = null, //default value for extra safety.
 ) {
   const config = addresses[protocol]?.[chain];
   if (!config) throw new Error("Invalid selection");
@@ -161,11 +159,10 @@ export async function getTopPairsByLiquidity(
   const variables = {
     limit: limit,
     where: {
-      reserveUSD_gt: "500",   // Minimum TVL $5k
-      txCount_gt: "50",       // MUST have at least 100 total trades (Filters out new scams)
-      volumeUSD_gt: "500",    // MUST have at least $1k total volume
-
-    }
+      reserveUSD_gt: "1000", // Minimum TVL $5k
+      txCount_gt: "50", // MUST have at least 100 total trades (Filters out new scams)
+      volumeUSD_gt: "500", // MUST have at least $1k total volume
+    },
   };
 
   // Step 2: Add the cursor ONLY if it exists

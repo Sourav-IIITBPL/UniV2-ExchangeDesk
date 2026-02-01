@@ -1,3 +1,24 @@
+
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  ExchangeDeskRouter deployed at: 0xa4AA9d05f142dbd5893992B70A1E8157b4801a50
+  Fee recipient: 0xD3C3d844f031c87722e38cd08052dC794F431D8f
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 11155111
+
+Estimated gas price: 2.173177652 gwei
+
+Estimated total gas used for script: 6902200
+
+Estimated amount required: 0.0149997067896344 ETH
+
+
 ## Foundry
 
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**

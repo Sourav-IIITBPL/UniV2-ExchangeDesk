@@ -16,7 +16,7 @@ import {IWETH} from "./interfaces/IWETH.sol";
 
 contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
     uint256 public constant BPS_DENOMINATOR = 10_000;
-    uint256 public constant MAX_FEE_BPS = 1; // 0.001%
+    uint256 public constant MAX_FEE_BPS = 1; // 0.01%
     uint256 public constant MAX_SLIPPAGE_BPS = 500; // 5%
     uint64 public constant MAX_DEADLINE_WINDOW = 20 minutes;
 
@@ -25,7 +25,7 @@ contract ExchangeDeskRouter is Ownable, ReentrancyGuard {
     address public immutable WETH;
 
     address public feeRecipient;
-    uint256 public feeBps = 1; // 0.001%
+    uint256 public feeBps = 1; // 0.01%
 
     error ZeroAddress();
     error SameToken();

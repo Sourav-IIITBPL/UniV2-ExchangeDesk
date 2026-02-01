@@ -7,6 +7,7 @@ import pairsRoute from "./routes/pairs.js";
 import eventsRoute from "./routes/events.js";
 import candlesRoute from "./routes/candles.js";
 import statsRoute from "./routes/stats.js";
+import swapRoute from "./routes/swap.js";
 
 const app = express();
 
@@ -16,7 +17,7 @@ app.use(cors());
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
-    "default-src 'self'; connect-src 'self' http://localhost:4000;"
+    "default-src 'self'; connect-src 'self' http://localhost:4000;",
   );
   next();
 });
@@ -28,6 +29,7 @@ app.use("/pairs", pairsRoute);
 app.use("/events", eventsRoute);
 app.use("/candles", candlesRoute);
 app.use("/stats", statsRoute);
+app.use("/swap", swapRoute);
 
 app.use((err, req, res, next) => {
   console.error(err);

@@ -1,4 +1,4 @@
 export const EXCHANGE_DESK_ROUTER = {
-  11155111: "0xYourSepoliaRouterAddress",
-  // 137: "0xPolygonRouterAddress"
+  //sepolia
+  11155111: "0xa4AA9d05f142dbd5893992B70A1E8157b4801a50",
 };

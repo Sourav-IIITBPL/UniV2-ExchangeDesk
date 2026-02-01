@@ -2,46 +2,7 @@ import React, { useEffect, useState, useRef, useCallback, useMemo, memo, forward
 import { TrendingUp, TrendingDown, Activity, Globe, Zap, ListFilter } from "lucide-react";
 import { fetchAllPools } from "../services/pool.service";
 import { PROTOCOLS_CONFIG, CHAINS } from "../services/api.js";
-
-// 1. FIXED: Added forwardRef to allow IntersectionObserver to attach to the DOM node
-const PoolRow = memo(forwardRef(({ pool, index, getTokenIcon }, ref) => (
-  <tr 
-    ref={ref} 
-    className="hover:bg-white/[0.04] transition-all duration-300 group border-b border-white/5"
-  >
-    <td className="p-4 md:p-6">
-      <div className="flex items-center gap-4">
-        <span className="text-xs font-mono text-zinc-600 hidden md:block">{index + 1}</span>
-        <div className="flex -space-x-3">
-          <img 
-            src={getTokenIcon(pool.tokenA, pool.tokenAAddress)} 
-            className="w-8 h-8 rounded-full border-2 border-[#141417] bg-zinc-800"
-            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${pool.tokenA}&background=random&color=fff`; }}
-            alt="" 
-          />
-          <img 
-            src={getTokenIcon(pool.tokenB, pool.tokenBAddress)} 
-            className="w-8 h-8 rounded-full border-2 border-[#141417] bg-zinc-800"
-            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${pool.tokenB}&background=random&color=fff`; }}
-            alt="" 
-          />
-        </div>
-        <div>
-          <div className="font-bold flex items-center gap-2 text-sm md:text-base">
-            {pool.tokenA}<span className="text-zinc-600">/</span>{pool.tokenB}
-            <Zap size={12} className="text-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-          <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">{pool.protocol || 'V2 AMM'}</div>
-        </div>
-      </div>
-    </td>
-    <td className="p-4 md:p-6 text-right font-mono text-sm">{pool.tvl}</td>
-    <td className="p-4 md:p-6 text-right font-mono text-zinc-400 text-sm">{pool.vol1D}</td>
-    <td className="p-4 md:p-6 text-right">
-      <span className="text-green-400 font-bold font-mono text-sm">{pool.apr}</span>
-    </td>
-  </tr>
-)));
+import { PoolRow ,getTokenIcon} from "./HomeHelper.jsx";
 
 export default function Home() {
   const [protocolStats, setProtocolStats] = useState([]);
@@ -52,34 +13,38 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const observer = useRef();
 
-  const getTokenIcon = (symbol, address) => 
-    `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${address}/logo.png`;
-
   const formatCurrency = (val) => 
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(val);
 
-  // --- 1. DATA FETCHING (Upper Boxes) ---
-  useEffect(() => {
-    const fetchStats = async () => {
-      const results = await Promise.all(PROTOCOLS_CONFIG.map(async (p) => {
-        try {
-          const res = await fetch(`https://api.llama.fi/summary/dexs/${p.slug}`);
-          if (!res.ok) throw new Error();
-          const data = await res.json();
-          return {
-            ...p,
-            tvl: data.totalLiquidity || 0,
-            vol: data.total24h || 0,
-            change: data.change_1d || 0 
-          };
-        } catch (err) {
-          return { ...p, tvl: 0, vol: 0, change: 0 };
-        }
-      }));
-      setProtocolStats(results);
-    };
-    fetchStats();
-  }, []);
+  // --- 1. DATA FETCHING (Upper Boxes) ---https://api.llama.fi/summary/dexs/sushiswap --https://api.llama.fi/tvl/pancakeswap-amm
+ useEffect(() => {
+  const fetchStats = async () => {
+    const results = await Promise.all(PROTOCOLS_CONFIG.map(async (p) => {
+      try {
+        // 1. Get current TVL (This endpoint returns a raw number, not JSON)
+        const tvlRes = await fetch(`https://api.llama.fi/tvl/${p.slug}`);
+        const tvlText = await tvlRes.text(); // Use .text() for the simple /tvl/ endpoint
+        const currentTvl = parseFloat(tvlText) || 0;
+
+        // 2. Fetch Volume and Change (Summary API)
+        const res = await fetch(`https://api.llama.fi/summary/dexs/${p.slug}`);
+        const data = await res.json();
+
+        return {
+          ...p, // Copy name, slug, logo from your config
+          tvl: currentTvl, 
+          vol: data?.total24h || 0,
+          change: data?.change_1d || 0 
+        };
+      } catch (err) {
+        console.error(`Error fetching ${p.slug}:`, err);
+        return { ...p, tvl: 0, vol: 0, change: 0 };
+      }
+    }));
+    setProtocolStats(results);
+  };
+  fetchStats();
+}, []);
 
   // --- 2. INFINITE SCROLL LOGIC ---
   const loadInitialData = useCallback(async () => {
@@ -87,7 +52,7 @@ export default function Home() {
     setHasMore(true);
     try {
       // If protocol is 'all', you might want a specific handler or just pass null
-      const protoParam = selectedProtocol === "all" ? null : selectedProtocol;
+      const protoParam = selectedProtocol;
       const data = await fetchAllPools({ 
         chain: selectedChain, 
         protocol: protoParam, 
@@ -147,59 +112,100 @@ export default function Home() {
 
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-4 md:p-8 font-sans selection:bg-blue-500/30">
+   <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-4 md:p-8 font-sans selection:bg-blue-500/30">
+  
+  {/* BACKGROUND GRAPHIC: High-end ambient orbs */}
+  <div className="fixed inset-0 overflow-hidden pointer-events-none">
+    <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full" />
+    <div className="absolute top-[20%] -right-[5%] w-[30%] h-[30%] bg-purple-600/10 blur-[120px] rounded-full" />
+  </div>
+     {/* TOP SECTION: Protocol Horizontal Cards */}
+<div className="relative z-10 mb-10">
+  <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500 mb-6 px-4 flex items-center gap-2">
+    <Activity size={14} className="text-blue-500" /> Global Market Overview
+  </h2>
+  
+  <div className="flex gap-6 overflow-x-auto pb-10 snap-x no-scrollbar px-4">
+    {protocolStats.map((item) => {
+      const isPositive = item.change >= 0;
+      const themeColor = isPositive ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)';
       
-      {/* BACKGROUND GRAPHIC */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full" />
-        <div className="absolute top-[20%] -right-[5%] w-[30%] h-[30%] bg-purple-600/10 blur-[120px] rounded-full" />
-      </div>
+      return (
+        <div 
+          key={item.slug} 
+          className="group relative min-w-[340px] snap-start p-[1.5px] rounded-[2.5rem] transition-all duration-500 hover:scale-[1.03] active:scale-95"
+        >
+          {/* ANIMATED BORDER: Appears only on hover */}
+          <div className="absolute inset-0 rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-[spin_4s_linear_infinite] blur-sm bg-[conic-gradient(from_0deg,transparent_60%,#3b82f6_80%,#60a5fa_90%,transparent_100%)]" 
+               style={{ background: `conic-gradient(from 0deg, transparent 60%, ${themeColor} 80%, white 95%, transparent 100%)` }} />
 
-      {/* TOP SECTION: Protocol Horizontal Cards */}
-      <div className="relative z-10 mb-10">
-        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500 mb-6 px-2 flex items-center gap-2">
-          <Activity size={14} className="text-blue-500" /> Global Market Overview
-        </h2>
-        
-        <div className="flex gap-6 overflow-x-auto pb-8 snap-x no-scrollbar px-2">
-          {protocolStats.map((item) => (
-            <div 
-              key={item.slug} 
-              className="min-w-[300px] snap-start p-6 bg-[#141417]/80 backdrop-blur-2xl border border-white/5 rounded-[2.5rem] 
-                         transition-all duration-500 ease-out hover:-translate-y-3 hover:border-blue-500/40 
-                         hover:shadow-[0_25px_50px_-12px_rgba(59,130,246,0.3)] group cursor-pointer"
-            >
+          {/* MAIN GLASS CARD */}
+          <div className="relative h-full w-full bg-[#0f1115]/90 backdrop-blur-2xl rounded-[2.5rem] p-7 border border-white/5 overflow-hidden">
+            
+            {/* GLASSY GLOW: Inner reflection/lighting */}
+            <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/[0.05] to-transparent pointer-events-none" />
+            
+            {/* PERFORMANCE GLOW: Subtle corner color based on +/- */}
+            <div className="absolute -top-16 -right-16 w-40 h-40 opacity-20 group-hover:opacity-40 transition-opacity duration-700 blur-[60px]"
+                 style={{ backgroundColor: isPositive ? '#22c55e' : '#ef4444' }} />
+
+            <div className="relative z-10">
               <div className="flex justify-between items-start mb-8">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-black/40 rounded-2xl group-hover:scale-110 transition-transform duration-500">
-                    <img src={item.icon} alt={item.name} className="w-8 h-8 object-contain" 
-                      onError={(e) => e.target.src = 'https://defillama.com/favicon.ico'}/>
+                  <div className="relative p-3 bg-white/5 border border-white/10 rounded-2xl group-hover:scale-110 group-hover:bg-white/10 transition-all duration-500 shadow-2xl">
+                    <img 
+                      src={item.icon} 
+                      alt={item.name} 
+                      className="w-9 h-9 object-contain relative z-10" 
+                      onError={(e) => e.target.src = 'https://defillama.com/favicon.ico'}
+                    />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white text-lg">{item.name}</h3>
-                    <span className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">Protocol Alpha</span>
+                    <h3 className="font-bold text-white text-lg tracking-tight">{item.name}</h3>
+                    <span className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase opacity-70">AMM Liquidity</span>
                   </div>
                 </div>
-                <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg ${item.change >= 0 ? 'text-green-400 bg-green-400/10' : 'text-red-400 bg-red-400/10'}`}>
-                  {item.change >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                  {Math.abs(item.change).toFixed(2)}%
+
+                {/* PULSE DOT & PERCENTAGE MOVED TO THE RIGHT */}
+                <div className="flex flex-col items-end gap-2">
+                   <div className={`flex items-center gap-1.5 text-[11px] font-black px-3 py-1 rounded-full border ${
+                    isPositive 
+                      ? 'text-green-400 bg-green-400/10 border-green-400/20' 
+                      : 'text-red-400 bg-red-400/10 border-red-400/20'
+                  }`}>
+                    {isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                    {Math.abs(item.change).toFixed(2)}%
+                  </div>
+
+                  {/* DYNAMIC PULSE DOT */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[8px] text-zinc-500 uppercase font-bold tracking-tighter">Live</span>
+                    <span className="relative flex h-2 w-2">
+                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isPositive ? 'bg-green-400' : 'bg-red-400'}`}></span>
+                      <span className={`relative inline-flex rounded-full h-2 w-2 ${isPositive ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                    </span>
+                  </div>
                 </div>
               </div>
 
+              {/* DATA SECTION */}
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-[10px] uppercase text-zinc-500 font-bold mb-1">Liquidity</p>
-                  <p className="text-xl font-mono font-bold">{formatCurrency(item.tvl)}</p>
+                <div className="p-4 bg-white/[0.02] border border-white/5 rounded-3xl group-hover:border-white/10 transition-colors">
+                  <p className="text-[10px] uppercase text-zinc-500 font-black mb-1 tracking-widest">Locked</p>
+                  <p className="text-xl font-bold text-white tracking-tight">{formatCurrency(item.tvl)}</p>
                 </div>
-                <div>
-                  <p className="text-[10px] uppercase text-zinc-500 font-bold mb-1">24H Volume</p>
-                  <p className="text-xl font-mono font-bold text-zinc-300">{formatCurrency(item.vol)}</p>
+                <div className="p-4 bg-white/[0.02] border border-white/5 rounded-3xl group-hover:border-white/10 transition-colors">
+                  <p className="text-[10px] uppercase text-zinc-500 font-black mb-1 tracking-widest">24h Vol</p>
+                  <p className="text-xl font-bold text-zinc-300 tracking-tight">{formatCurrency(item.vol)}</p>
                 </div>
               </div>
             </div>
-          ))}
+          </div>
         </div>
-      </div>
+      );
+    })}
+  </div>
+</div>
 
       {/* FILTER SECTION */}
       <div className="space-y-4 relative z-10 mb-8">
@@ -227,8 +233,8 @@ export default function Home() {
           {PROTOCOLS_CONFIG.map(proto => (
             <button 
               key={proto.slug}
-              onClick={() => setSelectedProtocol(proto.slug)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300 ${selectedProtocol === proto.slug ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'hover:bg-white/5 text-zinc-400'}`}
+              onClick={() => setSelectedProtocol(proto.id)}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300 ${selectedProtocol === proto.id ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'hover:bg-white/5 text-zinc-400'}`}
             >
               <img src={proto.icon} className="w-4 h-4 rounded-full" alt="" /> {proto.name}
             </button>
@@ -236,31 +242,52 @@ export default function Home() {
         </div>
       </div>
 
-      {/* MAIN TABLE */}
-      <div className="bg-[#141417] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[700px]">
-            <thead className="bg-white/5 text-zinc-500 text-[10px] uppercase font-bold">
-              <tr>
-                <th className="p-6">Liquidity Pair</th>
-                <th className="p-6 text-right">TVL</th>
-                <th className="p-6 text-right">Volume (24h)</th>
-                <th className="p-6 text-right">APR</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pools.map((pool, idx) => (
-                <PoolRow 
-                  key={`${pool.id}-${idx}`}
-                  ref={idx === pools.length - 1 ? lastElementRef : null}
-                  pool={pool} 
-                  index={idx} 
-                  getTokenIcon={getTokenIcon} 
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+     {/* MAIN TABLE CONTAINER */}
+<div className="relative bg-[#0f1115] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl transition-all duration-500 hover:border-blue-500/20">
+  
+  {/* TABLE HEADER/TITLE BAR */}
+  <div className="p-6 border-b border-white/5 bg-white/[0.01] flex justify-between items-center">
+    <div className="flex items-center gap-3">
+      <ListFilter size={18} className="text-blue-500" />
+      <h3 className="font-bold text-lg tracking-tight text-white">Market Liquidity Pools</h3>
+    </div>
+    <div className="flex gap-2">
+       <span className="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold text-zinc-500 uppercase tracking-widest border border-white/5">
+         Live Updates
+       </span>
+    </div>
+  </div>
+
+  <div className="overflow-x-auto no-scrollbar">
+    <table className="w-full text-left border-collapse min-w-[1000px]">
+      {/* HEADER ROW */}
+      <thead className="bg-[#141417] text-zinc-500 text-[10px] uppercase font-black tracking-[0.2em] border-b border-white/5">
+        <tr>
+          <th className="p-6 text-left">#  Active Pools </th>
+          <th className="p-6 text-right">TVL</th>
+          <th className="p-6 text-right">APR</th>
+          <th className="p-6 text-right">Fee</th>
+          <th className="p-6 text-right">Vol (24H)</th>
+          <th className="p-6 text-right">Vol (30D)</th>
+          <th className="p-6 text-right">V/T Ratio</th>
+          <th className="p-6 text-right pr-8">TX (24H)</th>
+        </tr>
+      </thead>
+      
+      <tbody className="divide-y divide-white/[0.02]">
+        {pools.map((pool, idx) => (
+          <PoolRow 
+            key={`${pool.id}-${idx}`}
+            ref={idx === pools.length - 1 ? lastElementRef : null}
+            pool={pool} 
+            index={idx} 
+            getTokenIcon={getTokenIcon} 
+          />
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
 
         {/* LOADING INDICATOR AT BOTTOM */}
         {loading && (
@@ -273,6 +300,5 @@ export default function Home() {
           </div>
         )}
       </div>
-    </div>
-  );
+     );
 }

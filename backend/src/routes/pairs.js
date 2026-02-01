@@ -9,6 +9,6 @@ const router = Router();
 
 router.get("/", listPairs);
 router.get("/check", checkPair);
-router.get("/ddress", getPairByAddress);
+router.get("/address", getPairByAddress);
 
 export default router;
