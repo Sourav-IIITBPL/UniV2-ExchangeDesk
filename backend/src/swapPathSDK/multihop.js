@@ -1,18 +1,19 @@
 // Uniswap V2 SDK (CommonJS → ESM interop)
-import pkg from '@uniswap/v2-sdk';
+import pkg from "@uniswap/v2-sdk";
 
-const {
-  ChainId,
-  Token,
-  Fetcher,
-  Trade,
-  TokenAmount,
-  TradeType
-} = pkg;
+const { ChainId, Token, Fetcher, Trade, TokenAmount, TradeType } = pkg;
 
 // Pancake & Shiba SDKs (also V2 forks)
-import { Token as PToken, Fetcher as PFetcher, Trade as PTrade } from '@pancakeswap/sdk';
-import { Token as SHToken, Fetcher as SHFetcher, Trade as SHTrade } from '@shibaswap/sdk';
+import {
+  Token as PToken,
+  Fetcher as PFetcher,
+  Trade as PTrade,
+} from "@pancakeswap/sdk";
+import {
+  Token as SHToken,
+  Fetcher as SHFetcher,
+  Trade as SHTrade,
+} from "@shibaswap/sdk";
 
 /**
  * Map protocols to their V2-compatible SDKs
@@ -23,26 +24,26 @@ const sdkMap = {
     Fetcher,
     Token,
     Trade,
-    TokenAmount
+    TokenAmount,
   },
   sushiswap: {
     Fetcher,
     Token,
     Trade,
-    TokenAmount
+    TokenAmount,
   },
   pancakeswap: {
     Fetcher: PFetcher,
     Token: PToken,
     Trade: PTrade,
-    TokenAmount
+    TokenAmount,
   },
   shibaswap: {
     Fetcher: SHFetcher,
     Token: SHToken,
     Trade: SHTrade,
-    TokenAmount
-  }
+    TokenAmount,
+  },
 };
 
 /**
@@ -56,7 +57,7 @@ export async function getBestPath(params) {
     tokenInAddr,
     tokenOutAddr,
     amountIn,
-    provider
+    provider,
   } = params;
 
   try {
@@ -65,13 +66,21 @@ export async function getBestPath(params) {
 
     const { Fetcher, Token, Trade, TokenAmount } = sdk;
 
-    const tokenIn = await Fetcher.fetchTokenData(chainId, tokenInAddr, provider);
-    const tokenOut = await Fetcher.fetchTokenData(chainId, tokenOutAddr, provider);
+    const tokenIn = await Fetcher.fetchTokenData(
+      chainId,
+      tokenInAddr,
+      provider,
+    );
+    const tokenOut = await Fetcher.fetchTokenData(
+      chainId,
+      tokenOutAddr,
+      provider,
+    );
 
     const bridgeTokens = await Promise.all(
-      (BASES || []).map(addr =>
-        Fetcher.fetchTokenData(chainId, addr, provider).catch(() => null)
-      )
+      (BASES || []).map((addr) =>
+        Fetcher.fetchTokenData(chainId, addr, provider).catch(() => null),
+      ),
     );
 
     const pairs = await fetchAllPairs(
@@ -79,24 +88,24 @@ export async function getBestPath(params) {
       tokenIn,
       tokenOut,
       bridgeTokens.filter(Boolean),
-      provider
+      provider,
     );
 
     const trades = Trade.bestTradeExactIn(
       pairs,
       new TokenAmount(tokenIn, amountIn),
       tokenOut,
-      { maxHops: 3, maxNumResults: 1 }
+      { maxHops: 3, maxNumResults: 1 },
     );
 
-    if (!trades.length) throw new Error('No path found');
+    if (!trades.length) throw new Error("No path found");
 
     const bestTrade = trades[0];
 
     return {
       protocol,
-      path: bestTrade.route.path.map(t => t.address),
-      amountOut: bestTrade.outputAmount.raw.toString()
+      path: bestTrade.route.path.map((t) => t.address),
+      amountOut: bestTrade.outputAmount.raw.toString(),
     };
   } catch (e) {
     return { error: e.message };
@@ -114,7 +123,7 @@ export async function getExactOutPath(params) {
     tokenInAddr,
     tokenOutAddr,
     amountOutDesired,
-    provider
+    provider,
   } = params;
 
   try {
@@ -123,13 +132,21 @@ export async function getExactOutPath(params) {
 
     const { Fetcher, Trade, TokenAmount } = sdk;
 
-    const tokenIn = await Fetcher.fetchTokenData(chainId, tokenInAddr, provider);
-    const tokenOut = await Fetcher.fetchTokenData(chainId, tokenOutAddr, provider);
+    const tokenIn = await Fetcher.fetchTokenData(
+      chainId,
+      tokenInAddr,
+      provider,
+    );
+    const tokenOut = await Fetcher.fetchTokenData(
+      chainId,
+      tokenOutAddr,
+      provider,
+    );
 
     const bridgeTokens = await Promise.all(
-      (BASES || []).map(addr =>
-        Fetcher.fetchTokenData(chainId, addr, provider).catch(() => null)
-      )
+      (BASES || []).map((addr) =>
+        Fetcher.fetchTokenData(chainId, addr, provider).catch(() => null),
+      ),
     );
 
     const pairs = await fetchAllPairs(
@@ -137,24 +154,24 @@ export async function getExactOutPath(params) {
       tokenIn,
       tokenOut,
       bridgeTokens.filter(Boolean),
-      provider
+      provider,
     );
 
     const trades = Trade.bestTradeExactOut(
       pairs,
       tokenIn,
       new TokenAmount(tokenOut, amountOutDesired),
-      { maxHops: 3, maxNumResults: 1 }
+      { maxHops: 3, maxNumResults: 1 },
     );
 
-    if (!trades.length) throw new Error('No path found');
+    if (!trades.length) throw new Error("No path found");
 
     const bestTrade = trades[0];
 
     return {
       protocol,
-      path: bestTrade.route.path.map(t => t.address),
-      amountInRequired: bestTrade.inputAmount.raw.toString()
+      path: bestTrade.route.path.map((t) => t.address),
+      amountInRequired: bestTrade.inputAmount.raw.toString(),
     };
   } catch (e) {
     return { error: e.message };
@@ -169,16 +186,16 @@ async function fetchAllPairs(fetcher, tokenIn, tokenOut, bases, provider) {
 
   // Direct
   requests.push(
-    fetcher.fetchPairData(tokenIn, tokenOut, provider).catch(() => null)
+    fetcher.fetchPairData(tokenIn, tokenOut, provider).catch(() => null),
   );
 
   // Bridges
   for (const base of bases) {
     requests.push(
-      fetcher.fetchPairData(tokenIn, base, provider).catch(() => null)
+      fetcher.fetchPairData(tokenIn, base, provider).catch(() => null),
     );
     requests.push(
-      fetcher.fetchPairData(base, tokenOut, provider).catch(() => null)
+      fetcher.fetchPairData(base, tokenOut, provider).catch(() => null),
     );
   }
 

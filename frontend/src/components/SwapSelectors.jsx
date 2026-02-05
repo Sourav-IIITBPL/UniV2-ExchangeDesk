@@ -56,7 +56,7 @@ export const ProtocolSelector = ({ value, onChange, allprotocols }) => (
 
 
 
-export function TokenSelector({ tokens, selectedToken, onSelect, label, balance, amount, setAmount, disabled }) {
+export function TokenSelector({ tokens, selectedToken, onSelect, label, balance, amount, setAmount, disabled ,lastTokenRef,loadingMore }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -130,6 +130,21 @@ export function TokenSelector({ tokens, selectedToken, onSelect, label, balance,
           </div>
         </div>
       )}
-    </div>
-  );
-}
+
+      {/* --- INFINITE SCROLL SENTINEL --- */}
+              <div 
+                ref={lastTokenRef} 
+                className="h-10 flex items-center justify-center w-full"
+              >
+                {loadingMore && (
+                  <div className="flex gap-2 items-center text-xs text-gray-500">
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    Loading tokens...
+                  </div>
+                )}
+              </div>
+
+
+            </div>
+
+      )}

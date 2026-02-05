@@ -10,7 +10,7 @@ export async function listPairs(req, res, next) {
   try {
     const {
       limit = 20,
-      chain = "polygon",
+      chain = "ethereum",
       protocol = "uniswap",
       lastTVL = null,
     } = req.query;

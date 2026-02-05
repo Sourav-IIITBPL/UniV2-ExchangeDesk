@@ -1,11 +1,14 @@
-import { useEffect, useState,useCallback } from "react";
+import { useRef,useEffect, useState,useCallback } from "react";
+
 import {fetchAllPools} from "../services/pool.service.js";
-import {previewExactIn,swapExactOut,swapExactIn,previewExactOut} from "../services/swap.service.js";
+import {previewExactIn,previewExactOut} from "../services/swap.service.js";
 
 import {TokenSelector,ChainSelector,ProtocolSelector} from "./SwapSelectors.jsx";
 import SwapConfirmationModal from "./SwapConfirmationModal.jsx";
 
+
 import {apiGet,PROTOCOLS_CONFIG,CHAINS} from "../services/api.js";
+import { useSwap } from "../hooks/useSwap";
 
 import debounce from "lodash/debounce"; // Recommended: npm install lodash
 
@@ -30,32 +33,130 @@ export default function SwapBox() {
   const [protocol, setProtocol] = useState("");
   const [tokenIn, setTokenIn] = useState(null);
   const [tokenOut, setTokenOut] = useState(null);
-  const [amountIn, setAmountIn] = useState("");
-  const [amountOut, setAmountOut] = useState("");
+  const [amountIn, setAmountIn] = useState("");             // preview amountIn
+  const [amountOut, setAmountOut] = useState("");           // preview amountOut
+  const [pathToSwap,setPathForSwap] = useState([]);         // preview pathToswap
   const [slippage, setSlippage] = useState(0.5);
   const [loading, setLoading] = useState(false);
   const [tokenList, setTokenList] = useState([]);
   const [lastInput, setLastInput] = useState("in"); // Tracks which field user typed in
-
+  
+  // modal variable
   const [showModal, setShowModal] = useState(false);
-const [warning, setWarning] = useState("");
+  const [warning, setWarning] = useState("");
 
-  // 1. Fetch Top 50 Tokens on Protocol/Chain Change
-  useEffect(() => {
-    if (chain && protocol) {
-      const loadTokens = async () => {
-        const data = await fetchAllPools({ chain, protocol, limit: 50 });
-        // Use a Set to avoid duplicate token addresses
-        const uniqueAddrs = new Set();
-        data.pairs.forEach(p => {
-          uniqueAddrs.add(p.token0.id);
-          uniqueAddrs.add(p.token1.id);
-        });
-        setTokenList(Array.from(uniqueAddrs));
-      };
-      loadTokens();
+  // swap variables 
+  const { executeSwap, swapLoading, error } = useSwap();
+
+  // token scrolling variables ..
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [rawReserveUSD,setRawReserveUSD] = useState(null);
+  const observer = useRef();
+  // 1. Fetch Top 50 Tokens on Protocol/Chain Change and fetch more i.e next 50 and so on automaticlaly  as user scrolls down 
+  // useEffect(() => {
+  //   if (chain && protocol) {
+  //     const loadTokens = async () => {
+  //       const data = await fetchAllPools({ limit: 50, chain, protocol });
+  //       // Use a Set to avoid duplicate token addresses
+  //       const uniqueAddrs = new Set();
+  //       data.pairs.forEach(p => {
+  //         uniqueAddrs.add(p.token0);
+  //         uniqueAddrs.add(p.token1);
+  //       });
+  //       setTokenList(Array.from(uniqueAddrs));
+  //     };
+  //     loadTokens();
+  //   }
+  // }, [chain, protocol]);
+  
+  
+  
+const loadTokens = async (isInitial = false) => {
+
+  if (!chain || !protocol) return; 
+
+  if (loadingMore || (!hasMore && !isInitial)) return;
+  setLoadingMore(true);
+
+  try {
+    const data = await fetchAllPools({ 
+      limit: 50,  
+      chain, 
+      protocol,
+      // If isInitial is true, we start from the top (null)
+      lastTVL: isInitial ? null : rawReserveUSD
+    });
+
+    const pairs = data.pairs || [];
+
+    if (pairs.length < 50) {
+      setHasMore(false);
     }
-  }, [chain, protocol]);
+
+    if (pairs.length > 0) {
+      // Update the cursor with the reserveUSD of the last pair
+      setRawReserveUSD(pairs[pairs.length - 1].reserveUSD);
+
+      setTokenList(prev => {
+        // Start fresh or append
+        const baseList = isInitial ? [] : [...prev];
+        
+        // Use a Set of IDs (addresses) to ensure real uniqueness
+        const seenIds = new Set(baseList.map(t => t.id.toLowerCase()));
+        const newTokens = [];
+
+        pairs.forEach(p => {
+          [p.token0, p.token1].forEach(token => {
+            const addr = token.id.toLowerCase();
+            if (!seenIds.has(addr)) {
+              seenIds.add(addr);
+              newTokens.push(token);
+            }
+          });
+        });
+
+        return [...baseList, ...newTokens];
+      });
+    }
+  } catch (err) {
+    console.error("Failed to fetch tokens:", err);
+  } finally {
+    setLoadingMore(false);
+  }
+};
+
+// Initial Load Reset
+useEffect(() => {
+  if (chain && protocol){
+    
+    setHasMore(true);
+    setRawReserveUSD(null);
+    setTokenList([]);
+    loadTokens(true); // Call with true to indicate a fresh start
+  }
+}, [chain, protocol]);
+
+// Intersection Observer
+const lastTokenRef = useCallback(node => {
+  if (loadingMore) return;
+  if (observer.current) observer.current.disconnect();
+
+  observer.current = new IntersectionObserver(entries => {
+    // Only fetch more if we have a valid cursor (rawReserveUSD) 
+    // and the observer is triggered
+    if (entries[0].isIntersecting && hasMore && !loadingMore) {
+      loadTokens(false);
+    }
+  });
+
+  if (node) observer.current.observe(node);
+}, [loadingMore, hasMore, rawReserveUSD]); // rawReserveUSD must be a dependency here!
+
+
+
+
+
 
   // 2. Automated Preview Logic (Debounced)
   const getQuote = useCallback(debounce(async (val, type) => {
@@ -64,9 +165,11 @@ const [warning, setWarning] = useState("");
     if (type === "in") {
       const res = await previewExactIn({ chain, protocol, tokenIn, tokenOut, amountIn: val, TokenList: tokenList });
       setAmountOut(res.amountOut);
+      setPathForSwap(res.path);
     } else {
       const res = await previewExactOut({ chain, protocol, tokenIn, tokenOut, amountOut: val, TokenList: tokenList });
       setAmountIn(res.amountIn);
+      setPathForSwap(res.path);
     }
     setLoading(false);
   }, 500), [chain, protocol, tokenIn, tokenOut, tokenList]);
@@ -82,7 +185,8 @@ const [warning, setWarning] = useState("");
 
 
   // actual swap logic 
-
+  
+  // 1. Validation Logic - Triggers BEFORE showing modal
   const handleSwapInitiation = () => {
   // 1. Validation Logic
   if (!account) return setWarning("Please connect your wallet first.");
@@ -96,14 +200,14 @@ const [warning, setWarning] = useState("");
 
 
 
-
+ // 2. Final Execution Logic - Called by the Modal's "Confirm" button
 const executeTransaction = async () => {
   setLoading(true);
+  setShowModal(false); // Close modal immediately to show loading on main button
   try {
      // Trigger the actual SDK swap logic here
-     handleSwap();
-     setShowModal(false);
-     alert("Transaction Sent!");
+     await handleSwap();
+    alert("Transaction Sent Successfully!");
   } catch (err) {
      setWarning("Transaction Failed: " + err.message);
   } finally {
@@ -113,21 +217,33 @@ const executeTransaction = async () => {
 
 
 const handleSwap = async () => {
-  const isNative = tokenIn === "0x000..." || tokenOut === "0x000...";
   
-  if (lastInput === "in") {
-    // If tokenIn is ETH, call swapExactETHForTokens, else swapExactTokensForTokens
-    await swapExactIn({ chain, protocol, path, amountIn, isNative });
-  } else {
-    // Exact Out logic
-    await swapExactOut({ chain, protocol, path, amountOut, isNative });
-  }
+  try {
+      const receipt = await executeSwap(protocol, {
+        chain : chain,
+        type: lastInput === "in" ? "ExactIn" : "ExactOut",
+        amountInToSwap:amountIn ,
+        amountOutToSwap: amountOut,
+        path: pathToSwap,
+        slippage : slippage
+      });
+      alert(`Swap Successful! Hash: ${receipt.hash}`);
+    } catch (err) {
+      // Error is already handled by the hook's state
+    }
 }
 
   return (
     <div className="w-full max-w-md p-1 bg-gradient-to-b from-border to-transparent rounded-[28px]">
       <div className="bg-card p-4 rounded-[26px] shadow-2xl">
         <h2 className="text-lg font-bold mb-4 px-2">Swap</h2>
+
+        <div className="relative">
+      <div className="w-full max-w-md bg-card p-6 rounded-[32px] border border-border shadow-xl">
+        {/* Warning Bar */}
+        {warning && <div className="mb-4 text-red-500 text-sm text-center">{warning}</div>}
+        </div>
+        </div>
         
        {/* Selectors Row */}
       <div className="flex gap-2 mb-6">
@@ -152,6 +268,8 @@ const handleSwap = async () => {
         amount={amountIn}
         setAmount={(v) => { setAmountIn(v); setLastInput("in"); }}
         disabled={!chain || !protocol}
+        lastTokenRef={lastTokenRef} // <--- Pass the ref here
+  loadingMore={loadingMore}
       />
 
       {/* Swap Button Icon */}
@@ -173,6 +291,8 @@ const handleSwap = async () => {
         amount={amountOut}
         setAmount={(v) => { setAmountOut(v); setLastInput("out"); }}
         disabled={!chain || !protocol}
+        lastTokenRef={lastTokenRef} // <--- Pass the ref here
+  loadingMore={loadingMore}
       />
 
         {/* Slippage Slider */}
@@ -182,7 +302,7 @@ const handleSwap = async () => {
             <span className="text-primary font-bold">{slippage}%</span>
           </div>
           <input 
-            type="range" min="0.1" max="5" step="0.5" 
+            type="range" min="0.1" max="5" step="0.1" 
             className="w-full h-1 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
             value={slippage}
             onChange={(e) => setSlippage(e.target.value)}
@@ -195,7 +315,39 @@ const handleSwap = async () => {
         >
           {!protocol ? "Select Protocol" : loading ? "Finding Best Path..." : "Swap Now"}
         </button>
+
+
+         {/* Main Swap Button */}
+        <button
+          disabled={loading}
+          onClick={handleSwapInitiation}
+          className="w-full mt-4 py-4 bg-primary text-white rounded-2xl font-bold hover:opacity-90 transition-all"
+        >
+          {loading ? "Processing..." : "Swap"}
+        </button>
       </div>
-    </div>
+
+      {/* 3. The Modal - Rendered conditionally */}
+      <SwapConfirmationModal 
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onConfirm={executeTransaction} // This links the confirm button to the actual swap
+        tokenIn={tokenIn}
+        tokenOut={tokenOut}
+        amountIn={amountIn}
+        amountOut={amountOut}
+        priceImpact="0.05" // Pass real price impact from your quote logic
+        path={pathToSwap}
+        slippage={slippage}
+      />
+      </div>
   );
 }
+
+
+
+
+
+
+
+

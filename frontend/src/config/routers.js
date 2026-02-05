@@ -1,4 +1,10 @@
 export const EXCHANGE_DESK_ROUTER = {
-  //sepolia
-  11155111: "0xa4AA9d05f142dbd5893992B70A1E8157b4801a50",
+  uniswap: {
+    sepolia: "0xa4AA9d05f142dbd5893992B70A1E8157b4801a50",
+  },
+  sushi: {
+    // ethereum :
+    // polygon :
+    // sepolia :
+  },
 };

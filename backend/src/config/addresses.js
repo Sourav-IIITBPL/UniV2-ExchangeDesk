@@ -59,7 +59,7 @@ export const addresses = {
 
     sepolia: {
       factory: "0xF62c03E08ada871A0bEb309762E260a7a6a880E6",
-      exchange_router : "0xa4AA9d05f142dbd5893992B70A1E8157b4801a50",
+      exchange_router: "0xa4AA9d05f142dbd5893992B70A1E8157b4801a50",
       router: "0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3",
       subgraphId: "H7m6p6Yst8m69R8hEBCm2zF8L3X9Ld6uA6zJ1Ym6p6Yst",
       fee: 0.003,

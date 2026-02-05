@@ -55,7 +55,7 @@ const chains = {
     name: "Sepolia",
     rpcUrl: process.env.SEPOLIA_RPC_URL,
     nativeCurrency: "ETH",
-  }
+  },
 };
 
 export default chains;
